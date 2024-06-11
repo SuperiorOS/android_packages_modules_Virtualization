@@ -20,8 +20,8 @@ import static android.content.pm.PackageManager.FEATURE_VIRTUALIZATION_FRAMEWORK
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
 
-import static org.junit.Assume.assumeTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -548,6 +548,7 @@ public abstract class MicrodroidDeviceTestBase {
         public int mFileMode;
         public int mMountFlags;
         public String mConsoleInput;
+        public byte[] mInstanceSecret;
 
         public void assertNoException() {
             if (mException != null) {

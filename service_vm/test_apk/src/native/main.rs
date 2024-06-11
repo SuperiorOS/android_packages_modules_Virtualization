@@ -72,7 +72,7 @@ impl AttestationService {
 impl IAttestationService for AttestationService {
     fn requestAttestationForTesting(&self) -> binder::Result<()> {
         const CHALLENGE: &[u8] = &[0xaa; 32];
-        let res = vm_payload::request_attestation_for_testing(CHALLENGE)
+        let res = vm_payload::restricted::request_attestation_for_testing(CHALLENGE)
             .with_log()
             .or_service_specific_exception(-1)?;
         *self.res.lock().unwrap() = Some(res);
