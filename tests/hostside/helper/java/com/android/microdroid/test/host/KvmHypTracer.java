@@ -38,16 +38,15 @@ import javax.annotation.Nonnull;
 public final class KvmHypTracer {
 
     private static final String HYP_TRACING_ROOT = "/sys/kernel/tracing/hyp/";
-    private static final String HYP_EVENTS[] = { "hyp_enter", "hyp_exit" };
     private static final int DEFAULT_BUF_SIZE_KB = 4 * 1024;
     private static final Pattern LOST_EVENT_PATTERN = Pattern.compile(
             "^CPU:[0-9]* \\[LOST ([0-9]*) EVENTS\\]");
-    private static final Pattern EVENT_PATTERN = Pattern.compile(
-            "^\\[([0-9]*)\\][ \t]*([0-9]*\\.[0-9]*): (" + String.join("|", HYP_EVENTS) + ") (.*)");
 
     private final CommandRunner mRunner;
     private final ITestDevice mDevice;
     private final int mNrCpus;
+    private final String mHypEvents[];
+    private final Pattern mHypEventPattern;
 
     private final ArrayList<File> mTraces;
 
@@ -59,22 +58,25 @@ public final class KvmHypTracer {
         return "events/hyp/" + event + "/";
     }
 
-    public static boolean isSupported(ITestDevice device) throws Exception {
-        for (String event: HYP_EVENTS) {
+    public static boolean isSupported(ITestDevice device, String[] events) throws Exception {
+        for (String event: events) {
             if (!device.doesFileExist(HYP_TRACING_ROOT + eventDir(event) + "/enable"))
                 return false;
         }
         return true;
     }
 
-    public KvmHypTracer(@Nonnull ITestDevice device) throws Exception {
-        assertWithMessage("Hypervisor tracing not supported")
-                .that(isSupported(device)).isTrue();
+    public KvmHypTracer(@Nonnull ITestDevice device, String[] events) throws Exception {
+        assertWithMessage("Hypervisor events " + String.join(",", events) + " not supported")
+            .that(isSupported(device, events)).isTrue();
 
         mDevice = device;
         mRunner = new CommandRunner(mDevice);
         mTraces = new ArrayList<File>();
         mNrCpus = Integer.parseInt(mRunner.run("nproc"));
+        mHypEvents = events;
+        mHypEventPattern = Pattern.compile(
+            "^\\[([0-9]*)\\][ \t]*([0-9]*\\.[0-9]*): (" + String.join("|", mHypEvents) + ") (.*)");
     }
 
     public String run(String payload_cmd) throws Exception {
@@ -83,7 +85,7 @@ public final class KvmHypTracer {
         setNode("tracing_on", 0);
         mRunner.run("echo 0 | tee " + HYP_TRACING_ROOT + "events/*/*/enable");
         setNode("buffer_size_kb", DEFAULT_BUF_SIZE_KB);
-        for (String event: HYP_EVENTS)
+        for (String event: mHypEvents)
             setNode(eventDir(event) + "/enable", 1);
         setNode("trace", 0);
 
@@ -128,8 +130,22 @@ public final class KvmHypTracer {
         return res;
     }
 
+    private boolean hasEvents(String[] events) {
+        for (String event : events) {
+            if (!Arrays.asList(mHypEvents).contains(event)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public SimpleStats getDurationStats() throws Exception {
+        String[] reqEvents = {"hyp_enter", "hyp_exit"};
         SimpleStats stats = new SimpleStats();
+
+        assertWithMessage("KvmHypTracer() is missing events " + String.join(",", reqEvents))
+            .that(hasEvents(reqEvents)).isTrue();
 
         for (File trace: mTraces) {
             BufferedReader br = new BufferedReader(new FileReader(trace));
@@ -140,7 +156,7 @@ public final class KvmHypTracer {
                 if (matcher.find())
                     throw new OutOfMemoryError("Lost " + matcher.group(1) + " events");
 
-                matcher = EVENT_PATTERN.matcher(l);
+                matcher = mHypEventPattern.matcher(l);
                 if (!matcher.find()) {
                     CLog.w("Failed to parse hyp event: " + l);
                     continue;

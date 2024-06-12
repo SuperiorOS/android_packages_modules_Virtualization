@@ -121,9 +121,14 @@ public final class AVFHostTestCase extends MicrodroidHostTestCaseBase {
 
     @Test
     public void testNoLongHypSections() throws Exception {
-        assumeTrue("Skip without hypervisor tracing", KvmHypTracer.isSupported(getDevice()));
+        String[] hypEvents = {
+            "hyp_enter", "hyp_exit"
+        };
 
-        KvmHypTracer tracer = new KvmHypTracer(getDevice());
+        assumeTrue("Skip without hypervisor tracing",
+            KvmHypTracer.isSupported(getDevice(), hypEvents));
+
+        KvmHypTracer tracer = new KvmHypTracer(getDevice(), hypEvents);
         String result = tracer.run(COMPOSD_CMD_BIN + " test-compile");
         assertWithMessage("Failed to test compilation VM.")
                 .that(result).ignoringCase().contains("all ok");
