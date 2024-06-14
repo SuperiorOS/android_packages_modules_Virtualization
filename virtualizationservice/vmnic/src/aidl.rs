@@ -23,7 +23,7 @@ use nix::ioctl_write_ptr_bad;
 use nix::sys::ioctl::ioctl_num_type;
 use nix::sys::socket::{socket, AddressFamily, SockFlag, SockType};
 use std::ffi::{CStr, CString};
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::os::fd::{AsRawFd, RawFd};
 use std::slice::from_raw_parts;
 
@@ -99,7 +99,10 @@ impl IVmnic for Vmnic {
             .context(format!("Invalid interface name: {ifname:#?}"))
             .or_service_specific_exception(-1)?;
 
-        let tunfd = File::open("/dev/tun")
+        let tunfd = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("/dev/tun")
             .context("Failed to open /dev/tun")
             .or_service_specific_exception(-1)?;
         let sock = socket(AddressFamily::Inet, SockType::Datagram, SockFlag::empty(), None)
