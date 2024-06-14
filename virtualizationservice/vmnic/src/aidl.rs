@@ -27,7 +27,7 @@ use std::fs::File;
 use std::os::fd::{AsRawFd, RawFd};
 use std::slice::from_raw_parts;
 
-const TUNGETIFF: ioctl_num_type = 0x800454d2u32 as c_int;
+const TUNGETIFF: ioctl_num_type = 0x800454d2u32 as ioctl_num_type;
 const TUNSETIFF: ioctl_num_type = 0x400454ca;
 const TUNSETPERSIST: ioctl_num_type = 0x400454cb;
 const SIOCSIFFLAGS: ioctl_num_type = 0x00008914;
