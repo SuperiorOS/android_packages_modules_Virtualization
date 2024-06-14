@@ -19,7 +19,7 @@ use android_system_virtualizationservice_internal::aidl::android::system::virtua
 use binder::{self, Interface, IntoBinderResult, ParcelFileDescriptor};
 use libc::{c_char, c_int, c_short, ifreq, IFF_NO_PI, IFF_TAP, IFF_UP, IFF_VNET_HDR, IFNAMSIZ};
 use log::info;
-use nix::{ioctl_write_int_bad, ioctl_write_ptr_bad};
+use nix::ioctl_write_ptr_bad;
 use nix::sys::ioctl::ioctl_num_type;
 use nix::sys::socket::{socket, AddressFamily, SockFlag, SockType};
 use std::ffi::{CStr, CString};
@@ -29,12 +29,10 @@ use std::slice::from_raw_parts;
 
 const TUNGETIFF: ioctl_num_type = 0x800454d2u32 as ioctl_num_type;
 const TUNSETIFF: ioctl_num_type = 0x400454ca;
-const TUNSETPERSIST: ioctl_num_type = 0x400454cb;
 const SIOCSIFFLAGS: ioctl_num_type = 0x00008914;
 
 ioctl_write_ptr_bad!(ioctl_tungetiff, TUNGETIFF, ifreq);
 ioctl_write_ptr_bad!(ioctl_tunsetiff, TUNSETIFF, ifreq);
-ioctl_write_int_bad!(ioctl_tunsetpersist, TUNSETPERSIST);
 ioctl_write_ptr_bad!(ioctl_siocsifflags, SIOCSIFFLAGS, ifreq);
 
 fn validate_ifname(ifname: &[c_char]) -> Result<()> {
@@ -51,8 +49,6 @@ fn create_tap_interface(fd: RawFd, sockfd: c_int, ifname: &[c_char]) -> Result<(
     ifr.ifr_name[..ifname.len()].copy_from_slice(ifname);
     // SAFETY: It modifies the state in the kernel, not the state of this process in any way.
     unsafe { ioctl_tunsetiff(fd, &ifr) }.context("Failed to ioctl TUNSETIFF")?;
-    // SAFETY: It modifies the state in the kernel, not the state of this process in any way.
-    unsafe { ioctl_tunsetpersist(fd, 1) }.context("Failed to ioctl TUNSETPERSIST")?;
     // SAFETY: ifr_ifru holds ifru_flags in its union field.
     unsafe { ifr.ifr_ifru.ifru_flags |= IFF_UP as c_short };
     // SAFETY: It modifies the state in the kernel, not the state of this process in any way.
@@ -69,13 +65,11 @@ fn get_tap_ifreq(fd: RawFd) -> Result<ifreq> {
     Ok(ifr)
 }
 
-fn delete_tap_interface(fd: RawFd, sockfd: c_int, ifr: &mut ifreq) -> Result<()> {
+fn delete_tap_interface(sockfd: c_int, ifr: &mut ifreq) -> Result<()> {
     // SAFETY: After calling TUNGETIFF, ifr_ifru holds ifru_flags in its union field.
     unsafe { ifr.ifr_ifru.ifru_flags &= !IFF_UP as c_short };
     // SAFETY: It modifies the state in the kernel, not the state of this process in any way.
     unsafe { ioctl_siocsifflags(sockfd, ifr) }.context("Failed to ioctl SIOCSIFFLAGS")?;
-    // SAFETY: It modifies the state in the kernel, not the state of this process in any way.
-    unsafe { ioctl_tunsetpersist(fd, 0) }.context("Failed to ioctl TUNSETPERSIST")?;
     Ok(())
 }
 
@@ -120,8 +114,7 @@ impl IVmnic for Vmnic {
     }
 
     fn deleteTapInterface(&self, tapfd: &ParcelFileDescriptor) -> binder::Result<()> {
-        let tap = tapfd.as_raw_fd();
-        let mut tap_ifreq = get_tap_ifreq(tap)
+        let mut tap_ifreq = get_tap_ifreq(tapfd.as_raw_fd())
             .context("Failed to get ifreq of TAP interface")
             .or_service_specific_exception(-1)?;
         // SAFETY: tap_ifreq.ifr_name is null-terminated within IFNAMSIZ, validated when creating
@@ -131,7 +124,7 @@ impl IVmnic for Vmnic {
         let sock = socket(AddressFamily::Inet, SockType::Datagram, SockFlag::empty(), None)
             .context("Failed to create socket")
             .or_service_specific_exception(-1)?;
-        delete_tap_interface(tap, sock.as_raw_fd(), &mut tap_ifreq)
+        delete_tap_interface(sock.as_raw_fd(), &mut tap_ifreq)
             .context(format!("Failed to create TAP interface: {ifname:#?}"))
             .or_service_specific_exception(-1)?;
 
