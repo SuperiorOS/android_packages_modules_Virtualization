@@ -307,6 +307,8 @@ don’t have to repeat this next time.
 
 To see console log, check
 `/data/data/com.android.virtualization.vmlauncher/files/console.log`
+Or
+`/data/data/com.google.android.virtualization.vmlauncher/files/console.log`
 
 For ChromiumOS, you can ssh-in. Use following commands after network setup.
 
