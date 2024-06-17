@@ -20,8 +20,8 @@ import static android.content.pm.PackageManager.FEATURE_VIRTUALIZATION_FRAMEWORK
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
 
-import static org.junit.Assume.assumeTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -213,13 +213,14 @@ public abstract class MicrodroidDeviceTestBase {
                 .isTrue();
         int vendorApiLevel = getVendorApiLevel();
         boolean isGsi = new File("/system/system_ext/etc/init/init.gsi.rc").exists();
+        Log.i(TAG, "isGsi = " + isGsi + ", vendor api level = " + vendorApiLevel);
         assume().withMessage("GSI with vendor API level < 202404 may not support AVF")
                 .that(isGsi && vendorApiLevel < 202404)
                 .isFalse();
     }
 
     protected static int getVendorApiLevel() {
-        return SystemProperties.getInt("ro.vendor.api_level", 0);
+        return SystemProperties.getInt("ro.board.api_level", 0);
     }
 
     protected void assumeSupportedDevice() {

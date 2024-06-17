@@ -22,6 +22,7 @@ import static android.os.ParcelFileDescriptor.MODE_READ_WRITE;
 
 import static java.util.Objects.requireNonNull;
 
+import android.Manifest;
 import android.annotation.FlaggedApi;
 import android.annotation.IntDef;
 import android.annotation.IntRange;
@@ -77,9 +78,11 @@ public final class VirtualMachineConfig {
     private static final String TAG = "VirtualMachineConfig";
 
     private static String[] EMPTY_STRING_ARRAY = {};
+    private static final String U_BOOT_PREBUILT_PATH = "/apex/com.android.virt/etc/u-boot.bin";
 
     // These define the schema of the config file persisted on disk.
-    private static final int VERSION = 8;
+    // Please bump up the version number when adding a new key.
+    private static final int VERSION = 9;
     private static final String KEY_VERSION = "version";
     private static final String KEY_PACKAGENAME = "packageName";
     private static final String KEY_APKPATH = "apkPath";
@@ -90,6 +93,7 @@ public final class VirtualMachineConfig {
     private static final String KEY_PROTECTED_VM = "protectedVm";
     private static final String KEY_MEMORY_BYTES = "memoryBytes";
     private static final String KEY_CPU_TOPOLOGY = "cpuTopology";
+    private static final String KEY_CONSOLE_INPUT_DEVICE = "consoleInputDevice";
     private static final String KEY_ENCRYPTED_STORAGE_BYTES = "encryptedStorageBytes";
     private static final String KEY_VM_OUTPUT_CAPTURED = "vmOutputCaptured";
     private static final String KEY_VM_CONSOLE_INPUT_SUPPORTED = "vmConsoleInputSupported";
@@ -97,6 +101,8 @@ public final class VirtualMachineConfig {
     private static final String KEY_VENDOR_DISK_IMAGE_PATH = "vendorDiskImagePath";
     private static final String KEY_OS = "os";
     private static final String KEY_EXTRA_APKS = "extraApks";
+    private static final String KEY_NETWORK_SUPPORTED = "networkSupported";
+    private static final String KEY_SHOULD_BOOST_UCLAMP = "shouldBoostUclamp";
 
     /** @hide */
     @Retention(RetentionPolicy.SOURCE)
@@ -173,6 +179,9 @@ public final class VirtualMachineConfig {
     /** CPU topology configuration of the VM. */
     @CpuTopology private final int mCpuTopology;
 
+    /** The serial device for VM console input. */
+    @Nullable private final String mConsoleInputDevice;
+
     /**
      * Path within the APK to the payload config file that defines software aspects of the VM.
      */
@@ -200,6 +209,11 @@ public final class VirtualMachineConfig {
 
     /** OS name of the VM using payload binaries. */
     @NonNull @OsName private final String mOs;
+
+    /** Whether to run the VM with supporting network feature or not. */
+    private final boolean mNetworkSupported;
+
+    private final boolean mShouldBoostUclamp;
 
     @Retention(RetentionPolicy.SOURCE)
     @StringDef(
@@ -229,12 +243,15 @@ public final class VirtualMachineConfig {
             boolean protectedVm,
             long memoryBytes,
             @CpuTopology int cpuTopology,
+            @Nullable String consoleInputDevice,
             long encryptedStorageBytes,
             boolean vmOutputCaptured,
             boolean vmConsoleInputSupported,
             boolean connectVmConsole,
             @Nullable File vendorDiskImage,
-            @NonNull @OsName String os) {
+            @NonNull @OsName String os,
+            boolean networkSupported,
+            boolean shouldBoostUclamp) {
         // This is only called from Builder.build(); the builder handles parameter validation.
         mPackageName = packageName;
         mApkPath = apkPath;
@@ -250,12 +267,15 @@ public final class VirtualMachineConfig {
         mProtectedVm = protectedVm;
         mMemoryBytes = memoryBytes;
         mCpuTopology = cpuTopology;
+        mConsoleInputDevice = consoleInputDevice;
         mEncryptedStorageBytes = encryptedStorageBytes;
         mVmOutputCaptured = vmOutputCaptured;
         mVmConsoleInputSupported = vmConsoleInputSupported;
         mConnectVmConsole = connectVmConsole;
         mVendorDiskImage = vendorDiskImage;
         mOs = os;
+        mNetworkSupported = networkSupported;
+        mShouldBoostUclamp = shouldBoostUclamp;
     }
 
     /** Loads a config from a file. */
@@ -330,6 +350,10 @@ public final class VirtualMachineConfig {
             builder.setMemoryBytes(memoryBytes);
         }
         builder.setCpuTopology(b.getInt(KEY_CPU_TOPOLOGY));
+        String consoleInputDevice = b.getString(KEY_CONSOLE_INPUT_DEVICE);
+        if (consoleInputDevice != null) {
+            builder.setConsoleInputDevice(consoleInputDevice);
+        }
         long encryptedStorageBytes = b.getLong(KEY_ENCRYPTED_STORAGE_BYTES);
         if (encryptedStorageBytes != 0) {
             builder.setEncryptedStorageBytes(encryptedStorageBytes);
@@ -352,6 +376,9 @@ public final class VirtualMachineConfig {
             }
         }
 
+        builder.setNetworkSupported(b.getBoolean(KEY_NETWORK_SUPPORTED));
+
+        builder.setShouldBoostUclamp(b.getBoolean(KEY_SHOULD_BOOST_UCLAMP));
         return builder.build();
     }
 
@@ -382,6 +409,9 @@ public final class VirtualMachineConfig {
         b.putInt(KEY_DEBUGLEVEL, mDebugLevel);
         b.putBoolean(KEY_PROTECTED_VM, mProtectedVm);
         b.putInt(KEY_CPU_TOPOLOGY, mCpuTopology);
+        if (mConsoleInputDevice != null) {
+            b.putString(KEY_CONSOLE_INPUT_DEVICE, mConsoleInputDevice);
+        }
         if (mMemoryBytes > 0) {
             b.putLong(KEY_MEMORY_BYTES, mMemoryBytes);
         }
@@ -399,6 +429,8 @@ public final class VirtualMachineConfig {
             String[] extraApks = mExtraApks.toArray(new String[0]);
             b.putStringArray(KEY_EXTRA_APKS, extraApks);
         }
+        b.putBoolean(KEY_NETWORK_SUPPORTED, mNetworkSupported);
+        b.putBoolean(KEY_SHOULD_BOOST_UCLAMP, mShouldBoostUclamp);
         b.writeToStream(output);
     }
 
@@ -575,6 +607,16 @@ public final class VirtualMachineConfig {
     }
 
     /**
+     * Returns whether the network feature is supported to the VM or not.
+     *
+     * @hide
+     */
+    @TestApi
+    public boolean isNetworkSupported() {
+        return mNetworkSupported;
+    }
+
+    /**
      * Tests if this config is compatible with other config. Being compatible means that the configs
      * can be interchangeably used for the same virtual machine; they do not change the VM identity
      * or secrets. Such changes include varying the number of CPUs or the size of the RAM. Changes
@@ -595,6 +637,7 @@ public final class VirtualMachineConfig {
                 && this.mVmOutputCaptured == other.mVmOutputCaptured
                 && this.mVmConsoleInputSupported == other.mVmConsoleInputSupported
                 && this.mConnectVmConsole == other.mConnectVmConsole
+                && this.mConsoleInputDevice == other.mConsoleInputDevice
                 && (this.mVendorDiskImage == null) == (other.mVendorDiskImage == null)
                 && Objects.equals(this.mPayloadConfigPath, other.mPayloadConfigPath)
                 && Objects.equals(this.mPayloadBinaryName, other.mPayloadBinaryName)
@@ -639,6 +682,11 @@ public final class VirtualMachineConfig {
                 Optional.ofNullable(customImageConfig.getBootloaderPath())
                         .map((path) -> openOrNull(new File(path), MODE_READ_ONLY))
                         .orElse(null);
+
+        if (config.kernel == null && config.bootloader == null) {
+            config.bootloader = openOrNull(new File(U_BOOT_PREBUILT_PATH), MODE_READ_ONLY);
+        }
+
         config.params =
                 Optional.ofNullable(customImageConfig.getParams())
                         .map((params) -> TextUtils.join(" ", params))
@@ -663,10 +711,16 @@ public final class VirtualMachineConfig {
                 Optional.ofNullable(customImageConfig.getDisplayConfig())
                         .map(dc -> dc.toParcelable())
                         .orElse(null);
+        config.gpuConfig =
+                Optional.ofNullable(customImageConfig.getGpuConfig())
+                        .map(dc -> dc.toParcelable())
+                        .orElse(null);
         config.protectedVm = this.mProtectedVm;
         config.memoryMib = bytesToMebiBytes(mMemoryBytes);
         config.cpuTopology = (byte) this.mCpuTopology;
+        config.consoleInputDevice = mConsoleInputDevice;
         config.devices = EMPTY_STRING_ARRAY;
+        config.networkSupported = this.mNetworkSupported;
         config.platformVersion = "~1.0";
         return config;
     }
@@ -718,20 +772,27 @@ public final class VirtualMachineConfig {
                 vsConfig.cpuTopology = android.system.virtualizationservice.CpuTopology.ONE_CPU;
                 break;
         }
-        if (mVendorDiskImage != null) {
+
+        if (mVendorDiskImage != null || mNetworkSupported) {
             VirtualMachineAppConfig.CustomConfig customConfig =
                     new VirtualMachineAppConfig.CustomConfig();
             customConfig.devices = EMPTY_STRING_ARRAY;
-            try {
-                customConfig.vendorImage =
-                        ParcelFileDescriptor.open(mVendorDiskImage, MODE_READ_ONLY);
-            } catch (FileNotFoundException e) {
-                throw new VirtualMachineException(
-                        "Failed to open vendor disk image " + mVendorDiskImage.getAbsolutePath(),
-                        e);
+            if (mVendorDiskImage != null) {
+                try {
+                    customConfig.vendorImage =
+                            ParcelFileDescriptor.open(mVendorDiskImage, MODE_READ_ONLY);
+                } catch (FileNotFoundException e) {
+                    throw new VirtualMachineException(
+                            "Failed to open vendor disk image "
+                                    + mVendorDiskImage.getAbsolutePath(),
+                            e);
+                }
             }
+            customConfig.networkSupported = mNetworkSupported;
             vsConfig.customConfig = customConfig;
         }
+
+        vsConfig.boostUclamp = mShouldBoostUclamp;
         return vsConfig;
     }
 
@@ -804,12 +865,15 @@ public final class VirtualMachineConfig {
         private boolean mProtectedVmSet;
         private long mMemoryBytes;
         @CpuTopology private int mCpuTopology = CPU_TOPOLOGY_ONE_CPU;
+        @Nullable private String mConsoleInputDevice;
         private long mEncryptedStorageBytes;
         private boolean mVmOutputCaptured = false;
         private boolean mVmConsoleInputSupported = false;
         private boolean mConnectVmConsole = false;
         @Nullable private File mVendorDiskImage;
         @NonNull @OsName private String mOs = DEFAULT_OS;
+        private boolean mNetworkSupported;
+        private boolean mShouldBoostUclamp = false;
 
         /**
          * Creates a builder for the given context.
@@ -886,6 +950,10 @@ public final class VirtualMachineConfig {
                         "debug level must be FULL to connect to the console");
             }
 
+            if (mNetworkSupported && mProtectedVm) {
+                throw new IllegalStateException("network is not supported on pVM");
+            }
+
             return new VirtualMachineConfig(
                     packageName,
                     apkPath,
@@ -897,12 +965,15 @@ public final class VirtualMachineConfig {
                     mProtectedVm,
                     mMemoryBytes,
                     mCpuTopology,
+                    mConsoleInputDevice,
                     mEncryptedStorageBytes,
                     mVmOutputCaptured,
                     mVmConsoleInputSupported,
                     mConnectVmConsole,
                     mVendorDiskImage,
-                    mOs);
+                    mOs,
+                    mNetworkSupported,
+                    mShouldBoostUclamp);
         }
 
         /**
@@ -1080,6 +1151,17 @@ public final class VirtualMachineConfig {
         }
 
         /**
+         * Sets the serial device for VM console input.
+         *
+         * @see android.system.virtualizationservice.ConsoleInputDevice
+         * @hide
+         */
+        public Builder setConsoleInputDevice(@Nullable String consoleInputDevice) {
+            mConsoleInputDevice = consoleInputDevice;
+            return this;
+        }
+
+        /**
          * Sets the size (in bytes) of encrypted storage available to the VM. If not set, no
          * encrypted storage is provided.
          *
@@ -1194,6 +1276,29 @@ public final class VirtualMachineConfig {
         @NonNull
         public Builder setOs(@NonNull @OsName String os) {
             mOs = requireNonNull(os, "os must not be null");
+            return this;
+        }
+
+        /**
+         * Sets whether to support network feature to VM. Default is {@code false}.
+         *
+         * @hide
+         */
+        @TestApi
+        @RequiresPermission(
+                allOf = {
+                    VirtualMachine.USE_CUSTOM_VIRTUAL_MACHINE_PERMISSION,
+                    Manifest.permission.INTERNET
+                })
+        @NonNull
+        public Builder setNetworkSupported(boolean networkSupported) {
+            mNetworkSupported = networkSupported;
+            return this;
+        }
+
+        /** @hide */
+        public Builder setShouldBoostUclamp(boolean shouldBoostUclamp) {
+            mShouldBoostUclamp = shouldBoostUclamp;
             return this;
         }
     }

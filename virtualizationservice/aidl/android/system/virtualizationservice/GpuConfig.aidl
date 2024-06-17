@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Android Open Source Project
+ * Copyright 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.microdroid.test.vmshare;
+package android.system.virtualizationservice;
 
-import android.system.virtualmachine.VirtualMachineDescriptor;
-import com.android.microdroid.testservice.ITestService;
-
-/** {@hide} */
-interface IVmShareTestService {
-    void importVm(in VirtualMachineDescriptor vmDesc);
-
-    ITestService startVm();
+parcelable GpuConfig {
+    @nullable String backend;
+    @nullable String[] contextTypes;
+    @nullable String pciAddress;
+    @nullable String rendererFeatures;
+    boolean rendererUseEgl = false;
+    boolean rendererUseGles = false;
+    boolean rendererUseGlx = false;
+    boolean rendererUseSurfaceless = false;
+    boolean rendererUseVulkan = false;
 }
