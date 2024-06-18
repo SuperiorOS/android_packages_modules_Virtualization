@@ -549,6 +549,7 @@ public abstract class MicrodroidDeviceTestBase {
         public int mFileMode;
         public int mMountFlags;
         public String mConsoleInput;
+        public byte[] mInstanceSecret;
 
         public void assertNoException() {
             if (mException != null) {
