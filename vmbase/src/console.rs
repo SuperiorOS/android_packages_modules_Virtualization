@@ -15,26 +15,33 @@
 //! Console driver for 8250 UART.
 
 use crate::uart::Uart;
-use core::fmt::{write, Arguments, Write};
+use core::{
+    cell::OnceCell,
+    fmt::{write, Arguments, Write},
+};
 use spin::mutex::SpinMutex;
 
-/// Base memory-mapped address of the primary UART device.
-pub const BASE_ADDRESS: usize = 0x3f8;
-
+// ADDRESS is the base of the MMIO region for a UART and must be mapped as device memory.
+static ADDRESS: SpinMutex<OnceCell<usize>> = SpinMutex::new(OnceCell::new());
 static CONSOLE: SpinMutex<Option<Uart>> = SpinMutex::new(None);
 
-/// Initialises a new instance of the UART driver and returns it.
-fn create() -> Uart {
-    // SAFETY: BASE_ADDRESS is the base of the MMIO region for a UART and is mapped as device
-    // memory.
-    unsafe { Uart::new(BASE_ADDRESS) }
-}
+/// Initialises the global instance of the UART driver.
+///
+/// This must be called before using the `print!` and `println!` macros.
+///
+/// # Safety
+///
+/// This must be called with the base of a UART, mapped as device memory and (if necessary) shared
+/// with the host as MMIO.
+pub unsafe fn init(base_address: usize) {
+    // Remember the valid address, for emergency console accesses.
+    ADDRESS.lock().set(base_address).expect("console::init() called more than once");
 
-/// Initialises the global instance of the UART driver. This must be called before using
-/// the `print!` and `println!` macros.
-pub fn init() {
-    let uart = create();
-    CONSOLE.lock().replace(uart);
+    // Initialize the console driver, for normal console accesses.
+    let mut console = CONSOLE.lock();
+    assert!(console.is_none(), "console::init() called more than once");
+    // SAFETY: base_address must be the base of a mapped UART.
+    console.replace(unsafe { Uart::new(base_address) });
 }
 
 /// Writes a formatted string followed by a newline to the console.
@@ -53,7 +60,12 @@ pub(crate) fn writeln(format_args: Arguments) {
 /// This is intended for use in situations where the UART may be in an unknown state or the global
 /// instance may be locked, such as in an exception handler or panic handler.
 pub fn ewriteln(format_args: Arguments) {
-    let mut uart = create();
+    let Some(cell) = ADDRESS.try_lock() else { return };
+    let Some(addr) = cell.get() else { return };
+
+    // SAFETY: addr contains the base of a mapped UART, passed in init().
+    let mut uart = unsafe { Uart::new(*addr) };
+
     let _ = write(&mut uart, format_args);
     let _ = uart.write_str("\n");
 }

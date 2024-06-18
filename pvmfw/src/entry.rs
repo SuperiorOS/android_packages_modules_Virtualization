@@ -66,7 +66,7 @@ configure_heap!(SIZE_128KB);
 pub fn start(fdt_address: u64, payload_start: u64, payload_size: u64, _arg3: u64) {
     // Limitations in this function:
     // - can't access non-pvmfw memory (only statically-mapped memory)
-    // - can't access MMIO (therefore, no logging)
+    // - can't access MMIO (except the console, already configured by vmbase)
 
     match main_wrapper(fdt_address as usize, payload_start as usize, payload_size as usize) {
         Ok((entry, bcc)) => jump_to_payload(fdt_address, entry.try_into().unwrap(), bcc),
