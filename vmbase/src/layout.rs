@@ -26,14 +26,17 @@ use static_assertions::const_assert_eq;
 /// First address that can't be translated by a level 1 TTBR0_EL1.
 pub const MAX_VIRT_ADDR: usize = 1 << 40;
 
-/// Base memory-mapped address of the primary UART device.
+/// Base memory-mapped addresses of the UART devices.
 ///
 /// See SERIAL_ADDR in https://crosvm.dev/book/appendix/memory_layout.html#common-layout.
-pub const UART_ADDR: usize = 0x3f8;
+pub const UART_ADDRESSES: [usize; 4] = [0x3f8, 0x2f8, 0x3e8, 0x2e8];
 
 /// Address of the single page containing all the UART devices.
 pub const UART_PAGE_ADDR: usize = 0;
-const_assert_eq!(UART_PAGE_ADDR, page_4kb_of(UART_ADDR));
+const_assert_eq!(UART_PAGE_ADDR, page_4kb_of(UART_ADDRESSES[0]));
+const_assert_eq!(UART_PAGE_ADDR, page_4kb_of(UART_ADDRESSES[1]));
+const_assert_eq!(UART_PAGE_ADDR, page_4kb_of(UART_ADDRESSES[2]));
+const_assert_eq!(UART_PAGE_ADDR, page_4kb_of(UART_ADDRESSES[3]));
 
 /// Get an address from a linker-defined symbol.
 #[macro_export]
