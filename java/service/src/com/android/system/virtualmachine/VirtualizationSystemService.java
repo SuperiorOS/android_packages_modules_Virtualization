@@ -159,13 +159,14 @@ public class VirtualizationSystemService extends SystemService {
     }
 
     private final class TetheringService extends IVmTethering.Stub {
+        private final TetheringManager tm = getContext().getSystemService(TetheringManager.class);
+
         @Override
         public void enableVmTethering() {
             final TetheringRequest tr =
                     new TetheringRequest.Builder(TetheringManager.TETHERING_VIRTUAL)
                             .setConnectivityScope(TetheringManager.CONNECTIVITY_SCOPE_GLOBAL)
                             .build();
-            final TetheringManager tm = getContext().getSystemService(TetheringManager.class);
 
             StartTetheringCallback startTetheringCallback =
                     new StartTetheringCallback() {
@@ -183,6 +184,11 @@ public class VirtualizationSystemService extends SystemService {
                         }
                     };
             tm.startTethering(tr, c -> c.run() /* executor */, startTetheringCallback);
+        }
+
+        @Override
+        public void disableVmTethering() {
+            tm.stopTethering(TetheringManager.TETHERING_VIRTUAL);
         }
     }
 }
