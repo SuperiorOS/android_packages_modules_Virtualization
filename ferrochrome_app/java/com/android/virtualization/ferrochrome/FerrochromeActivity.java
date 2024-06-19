@@ -129,9 +129,6 @@ public class FerrochromeActivity extends Activity {
     }
 
     private void copyVmConfigJson() {
-        if (Files.exists(VM_CONFIG_PATH)) {
-            return;
-        }
         try (InputStream is = getResources().openRawResource(R.raw.vm_config)) {
             Files.copy(is, VM_CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
