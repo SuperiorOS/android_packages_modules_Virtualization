@@ -35,6 +35,9 @@ import android.util.Log;
 import com.android.internal.os.BackgroundThread;
 import com.android.server.SystemService;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 /**
  * This class exists to notify virtualization service of relevant things happening in the Android
  * framework.
@@ -43,24 +46,15 @@ import com.android.server.SystemService;
  * storing secrets for apps or users that no longer exist.
  */
 public class VirtualizationSystemService extends SystemService {
-    static {
-        System.loadLibrary("virtualizationsystemservice_jni");
-    }
-
     private static final String TAG = VirtualizationSystemService.class.getName();
     private static final String MAINTENANCE_SERVICE_NAME =
             "android.system.virtualizationmaintenance";
     private Handler mHandler;
     private final TetheringService mTetheringService;
 
-    /*
-     * Retrieve boolean value whether RELEASE_AVF_ENABLE_NETWORK build flag is enabled or not.
-     */
-    static native boolean nativeIsNetworkFlagEnabled();
-
     public VirtualizationSystemService(Context context) {
         super(context);
-        if (nativeIsNetworkFlagEnabled()) {
+        if (Files.exists(Paths.get("/apex/com.android.virt/bin/vmnic"))) {
             mTetheringService = new TetheringService();
         } else {
             mTetheringService = null;
