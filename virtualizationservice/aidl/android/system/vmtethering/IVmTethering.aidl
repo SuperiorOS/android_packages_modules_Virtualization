@@ -21,4 +21,9 @@ interface IVmTethering {
      * Start VM tethering to provide external network to VM.
      */
     void enableVmTethering();
+
+    /**
+     * Terminate VM tethering that providing external network to VM.
+     */
+    void disableVmTethering();
 }
