@@ -550,6 +550,10 @@ impl IVirtualizationServiceInternal for VirtualizationServiceInternal {
             ))
             .with_log();
         }
+
+        // TODO(340377643): Disabling tethering should be for bridge interface, not TAP interface.
+        TETHERING_SERVICE.disableVmTethering()?;
+
         NETWORK_SERVICE.deleteTapInterface(tap_fd)
     }
 }
