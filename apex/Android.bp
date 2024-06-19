@@ -89,6 +89,7 @@ avf_flag_aware_apex_defaults {
     ],
     jni_libs: [
         "libvirtualizationservice_jni",
+        "libvirtualizationsystemservice_jni",
         "libvirtualmachine_jni",
     ],
     // TODO(b/295593640) Unfortunately these are added to the apex even though they are unused.

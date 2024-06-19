@@ -20,6 +20,20 @@ cc_library_shared {
 }
 
 cc_library_shared {
+    name: "libvirtualizationsystemservice_jni",
+    defaults: ["avf_build_flags_cc"],
+    srcs: [
+        "com_android_system_virtualmachine_VirtualizationSystemService.cpp",
+    ],
+    apex_available: ["com.android.virt"],
+    shared_libs: [
+        "liblog",
+        "libnativehelper",
+    ],
+    static_libs: ["libavf_cc_flags"],
+}
+
+cc_library_shared {
     name: "libvirtualmachine_jni",
     defaults: ["avf_build_flags_cc"],
     srcs: [

@@ -77,6 +77,7 @@ soong_config_module_type {
     config_namespace: "ANDROID",
     bool_variables: [
         "release_avf_enable_dice_changes",
+        "release_avf_enable_network",
         "release_avf_enable_vendor_modules",
         "release_avf_enable_virt_cpufreq",
     ],
@@ -90,6 +91,9 @@ avf_flag_aware_cc_defaults {
     soong_config_variables: {
         release_avf_enable_dice_changes: {
             cflags: ["-DAVF_OPEN_DICE_CHANGES=1"],
+        },
+        release_avf_enable_network: {
+            cflags: ["-DAVF_ENABLE_NETWORK=1"],
         },
         release_avf_enable_vendor_modules: {
             cflags: ["-DAVF_ENABLE_VENDOR_MODULES=1"],
