@@ -27,14 +27,6 @@ inline bool IsOpenDiceChangesFlagEnabled() {
 #endif
 }
 
-inline bool IsNetworkFlagEnabled() {
-#ifdef AVF_ENABLE_NETWORK
-    return AVF_ENABLE_NETWORK;
-#else
-    return false;
-#endif
-}
-
 inline bool IsVendorModulesFlagEnabled() {
 #ifdef AVF_ENABLE_VENDOR_MODULES
     return AVF_ENABLE_VENDOR_MODULES;
