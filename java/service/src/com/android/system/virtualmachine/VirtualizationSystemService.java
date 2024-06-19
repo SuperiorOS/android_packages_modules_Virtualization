@@ -21,6 +21,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.TetheringManager;
+import android.net.TetheringManager.StartTetheringCallback;
+import android.net.TetheringManager.TetheringRequest;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ServiceManager;
@@ -155,10 +158,31 @@ public class VirtualizationSystemService extends SystemService {
         }
     }
 
-    private static final class TetheringService extends IVmTethering.Stub {
+    private final class TetheringService extends IVmTethering.Stub {
         @Override
-        public void enableVmTethering() throws UnsupportedOperationException {
-            throw new UnsupportedOperationException("VM tethering is not supported yet");
+        public void enableVmTethering() {
+            final TetheringRequest tr =
+                    new TetheringRequest.Builder(TetheringManager.TETHERING_VIRTUAL)
+                            .setConnectivityScope(TetheringManager.CONNECTIVITY_SCOPE_GLOBAL)
+                            .build();
+            final TetheringManager tm = getContext().getSystemService(TetheringManager.class);
+
+            StartTetheringCallback startTetheringCallback =
+                    new StartTetheringCallback() {
+                        @Override
+                        public void onTetheringStarted() {
+                            Log.i(TAG, "VM tethering started successfully");
+                        }
+
+                        @Override
+                        public void onTetheringFailed(int resultCode) {
+                            Log.e(
+                                    TAG,
+                                    "VM tethering failed. Result Code: "
+                                            + Integer.toString(resultCode));
+                        }
+                    };
+            tm.startTethering(tr, c -> c.run() /* executor */, startTetheringCallback);
         }
     }
 }
