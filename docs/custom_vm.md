@@ -82,8 +82,8 @@ IMPORTANT: DO NOT USE `vmlinuz.bin` for passing to crosvm. It doesn't pick-up th
 
 First, check out source code from the ChromiumOS and Chromium projects.
 
+* Checking out Chromium: https://www.chromium.org/developers/how-tos/get-the-code/
 * Checking out ChromiumOS: https://www.chromium.org/chromium-os/developer-library/guides/development/developer-guide/
-* Checking out Chromium: https://g3doc.corp.google.com/chrome/chromeos/system_services_team/dev_instructions/g3doc/setup_checkout.md?cl=head
 
 Important: When you are at the step “Set up gclient args” in the Chromium checkout instruction, configure .gclient as follows.
 
@@ -95,9 +95,7 @@ solutions = [
     "url": "https://chromium.googlesource.com/chromium/src.git",
     "managed": False,
     "custom_deps": {},
-    "custom_vars": {
-      "checkout_src_internal": True,
-    },
+    "custom_vars": {},
   },
 ]
 target_os = ['chromeos']
