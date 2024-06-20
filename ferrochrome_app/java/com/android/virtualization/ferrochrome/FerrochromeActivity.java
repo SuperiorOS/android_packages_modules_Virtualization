@@ -43,7 +43,7 @@ import java.util.zip.ZipInputStream;
 public class FerrochromeActivity extends Activity {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final String TAG = "FerrochromeActivity";
-    private static final String FERROCHROME_VERSION = "R127-15916.0.0";
+    private static final String FERROCHROME_VERSION = "R128-15926.0.0";
     private static final String EXTERNAL_STORAGE_DIR =
             Environment.getExternalStorageDirectory().getPath() + File.separator;
     private static final Path IMAGE_PATH =
