@@ -65,18 +65,13 @@ payload. We will be adding more OSes in the future.
 
 #### Download from build server
 
-  - Step 1) Go to the link https://ci.chromium.org/ui/p/chromeos/builders/chromiumos/ferrochrome-public-main/
-    - Note: I 'searched' the ferrochrome target with builder search.
-  - Step 2) Click a build number
-  - Step 3) Expand steps and find `48. upload artifacts`.
-  - Step 4) Click `gs upload dir`. You'll see Cloud storage with comprehensive artifacts (e.g. [Here](https://pantheon.corp.google.com/storage/browser/chromiumos-image-archive/ferrochrome-public/R126-15883.0.0) is the initial build of ferrochrome)
-  - Step 5) Download `image.zip`, which contains working vmlinuz.
-    - Note: DO NOT DOWNLOAD `vmlinuz.tar.xz` from the CI.
-  - Step 6) Uncompress `image.zip`, and boot with `chromiumos_test_image.bin` and `boot_images/vmlinuz`.
-    - Note: DO NOT USE `vmlinuz.bin`.
+Here's the link the comprehensive artifacts
+https://pantheon.corp.google.com/storage/browser/chromiumos-image-archive/ferrochrome-public
 
-IMPORTANT: DO NOT USE `vmlinuz.bin` for passing to crosvm. It doesn't pick-up the correct `init` process (picks `/init` instead of `/sbin/init`, and `cfg80211` keeps crashing (i.e. no network)
+Pick a build, download, and untar `chromiumos_test_image.tar.xz`. We'll boot with `chromiumos_test_image.bin` in it.
 
+To find the latest green build, check following:
+https://pantheon.corp.google.com/storage/browser/_details/chromiumos-image-archive/ferrochrome-public/LATEST-main
 
 #### Build ChromiumOS for VM
 
@@ -160,10 +155,7 @@ invoking emerge directly:
 
 Don’t forget to call `build-image` afterwards.
 
-You need two outputs:
-
-* ChromiumOS disk image: ~/chromiumos/src/build/images/ferrochrome/latest/chromiumos_test_image.bin
-* The kernel: ~/chromiumos/src/build/images/ferrochrome/latest/boot_images/vmlinuz
+You need ChromiumOS disk image: ~/chromiumos/src/build/images/ferrochrome/latest/chromiumos_test_image.bin
 
 ### Create a guest VM configuration
 
@@ -171,7 +163,6 @@ Push the kernel and the main image to the Android device.
 
 ```
 $ adb push  ~/chromiumos/src/build/images/ferrochrome/latest/chromiumos_test_image.bin /data/local/tmp/
-$ adb push ~/chromiumos/out/build/ferrochrome/boot/vmlinuz /data/local/tmp/kernel
 ```
 
 Create a VM config file as below.
@@ -180,7 +171,6 @@ Create a VM config file as below.
 $ cat > vm_config.json; adb push vm_config.json /data/local/tmp
 {
     "name": "cros",
-    "kernel": "/data/local/tmp/kernel",
     "disks": [
         {
             "image": "/data/local/tmp/chromiumos_test_image.bin",
