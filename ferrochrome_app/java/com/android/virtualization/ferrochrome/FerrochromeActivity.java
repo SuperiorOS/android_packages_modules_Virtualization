@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemProperties;
@@ -39,12 +40,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class FerrochromeActivity extends Activity {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final String TAG = "FerrochromeActivity";
+    private static final String ACTION_VM_LAUNCHER = "android.virtualization.VM_LAUNCHER";
     private static final String FERROCHROME_VERSION = "R128-15926.0.0";
     private static final String EXTERNAL_STORAGE_DIR =
             Environment.getExternalStorageDirectory().getPath() + File.separator;
@@ -60,9 +63,19 @@ public class FerrochromeActivity extends Activity {
         setContentView(R.layout.activity_ferrochrome);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // Find VM Launcher
+        Intent intent = new Intent(ACTION_VM_LAUNCHER);
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> resolveInfos =
+                pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        if (resolveInfos == null || resolveInfos.size() != 1) {
+            updateStatus("Failed to resolve VM Launcher");
+            return;
+        }
+
         // Clean up the existing vm launcher process if there is
         ActivityManager am = getSystemService(ActivityManager.class);
-        am.killBackgroundProcesses(getVmLauncherAppPackageName());
+        am.killBackgroundProcesses(resolveInfos.get(0).activityInfo.packageName);
 
         executorService.execute(
                 () -> {
@@ -96,31 +109,8 @@ public class FerrochromeActivity extends Activity {
                     }
                     updateStatus("Done.");
                     updateStatus("Starting Ferrochrome...");
-                    runOnUiThread(
-                            () ->
-                                    startActivity(
-                                            new Intent()
-                                                    .setClassName(
-                                                            getVmLauncherAppPackageName(),
-                                                            "com.android.virtualization.vmlauncher.MainActivity")));
+                    runOnUiThread(() -> startActivity(intent));
                 });
-    }
-
-    private String getVmLauncherAppPackageName() {
-        PackageManager pm = getPackageManager();
-        for (String packageName :
-                new String[] {
-                    "com.android.virtualization.vmlauncher",
-                    "com.google.android.virtualization.vmlauncher"
-                }) {
-            try {
-                pm.getPackageInfo(packageName, 0);
-                return packageName;
-            } catch (PackageManager.NameNotFoundException e) {
-                continue;
-            }
-        }
-        return null;
     }
 
     private void updateStatus(String line) {
