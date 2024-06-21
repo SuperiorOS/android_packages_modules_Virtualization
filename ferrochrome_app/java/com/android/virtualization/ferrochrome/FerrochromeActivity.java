@@ -27,6 +27,10 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,8 +41,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class FerrochromeActivity extends Activity {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -159,16 +161,17 @@ public class FerrochromeActivity extends Activity {
         String urlString =
                 "https://storage.googleapis.com/chromiumos-image-archive/ferrochrome-public/"
                         + version
-                        + "/image.zip";
+                        + "/chromiumos_test_image.tar.xz";
         try (InputStream is = (new URL(urlString)).openStream();
-                ZipInputStream zis = new ZipInputStream(is)) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
+                XZCompressorInputStream xz = new XZCompressorInputStream(is);
+                TarArchiveInputStream tar = new TarArchiveInputStream(xz)) {
+            TarArchiveEntry entry;
+            while ((entry = tar.getNextTarEntry()) != null) {
                 if (!entry.getName().contains("chromiumos_test_image.bin")) {
                     continue;
                 }
                 updateStatus("copy " + entry.getName() + " start");
-                Files.copy(zis, IMAGE_PATH, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(tar, IMAGE_PATH, StandardCopyOption.REPLACE_EXISTING);
                 updateStatus("copy " + entry.getName() + " done");
                 updateVersionInfo(version);
                 break;
