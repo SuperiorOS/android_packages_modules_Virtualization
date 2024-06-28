@@ -27,7 +27,6 @@ rust_library_rlib {
     ],
     visibility: [
         "//packages/modules/Virtualization:__subpackages__",
-        "//system/authgraph/tests:__subpackages__",
     ],
 }
 
