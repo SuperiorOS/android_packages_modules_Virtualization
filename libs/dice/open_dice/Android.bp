@@ -50,12 +50,6 @@ rust_library {
     shared_libs: [
         "libcrypto",
     ],
-    static_libs: [
-        "libopen_dice_cbor",
-    ],
-    whole_static_libs: [
-        "libopen_dice_android",
-    ],
     visibility: [
         "//hardware/interfaces/security/secretkeeper/aidl/vts",
         "//packages/modules/Virtualization:__subpackages__",
