@@ -69,7 +69,7 @@ public abstract class MicrodroidDeviceTestBase {
     protected static final String KERNEL_VERSION = SystemProperties.get("ro.kernel.version");
     protected static final Set<String> SUPPORTED_GKI_VERSIONS =
             Collections.unmodifiableSet(
-                    new HashSet(Arrays.asList("android14-6.1-pkvm_experimental")));
+                    new HashSet(Arrays.asList("android14-6.1-pkvm_experimental", "android15-6.6")));
 
     public static boolean isCuttlefish() {
         return getDeviceProperties().isCuttlefish();
