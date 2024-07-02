@@ -16,6 +16,7 @@
 package com.android.microdroid.test.device;
 
 import static android.content.pm.PackageManager.FEATURE_VIRTUALIZATION_FRAMEWORK;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
@@ -219,6 +220,12 @@ public abstract class MicrodroidDeviceTestBase {
         Log.i(TAG, "isGsi = " + isGsi + ", vendor api level = " + vendorApiLevel);
         assume().withMessage("GSI with vendor API level < 202404 may not support AVF")
                 .that(isGsi && vendorApiLevel < 202404)
+                .isFalse();
+    }
+
+    protected void assumeVsrCompliant() {
+        assume().withMessage("Watches are not VSR compliant")
+                .that(mCtx.getPackageManager().hasSystemFeature(FEATURE_WATCH))
                 .isFalse();
     }
 
