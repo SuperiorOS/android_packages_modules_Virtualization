@@ -416,6 +416,30 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        if (mVirtualMachine != null) {
+            try {
+                mVirtualMachine.suspend();
+            } catch (VirtualMachineException e) {
+                Log.e(TAG, "Failed to suspend VM" + e);
+            }
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (mVirtualMachine != null) {
+            try {
+                mVirtualMachine.resume();
+            } catch (VirtualMachineException e) {
+                Log.e(TAG, "Failed to resume VM" + e);
+            }
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (mExecutorService != null) {
