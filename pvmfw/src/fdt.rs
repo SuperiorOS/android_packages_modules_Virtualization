@@ -774,6 +774,7 @@ impl WdtInfo {
     const GIC_PPI: u32 = 1;
     const IRQ_TYPE_EDGE_RISING: u32 = 1;
     const GIC_FDT_IRQ_PPI_CPU_SHIFT: u32 = 8;
+    // TODO(b/350498812): Rework this for >8 vCPUs.
     const GIC_FDT_IRQ_PPI_CPU_MASK: u32 = 0xff << Self::GIC_FDT_IRQ_PPI_CPU_SHIFT;
 
     const fn get_expected(num_cpus: usize) -> Self {
@@ -939,6 +940,7 @@ fn patch_timer(fdt: &mut Fdt, num_cpus: usize) -> libfdt::Result<()> {
         interrupts.take(NUM_INTERRUPTS * CELLS_PER_INTERRUPT).collect();
 
     let num_cpus: u32 = num_cpus.try_into().unwrap();
+    // TODO(b/350498812): Rework this for >8 vCPUs.
     let cpu_mask: u32 = (((0x1 << num_cpus) - 1) & 0xff) << 8;
 
     for v in value.iter_mut().skip(2).step_by(CELLS_PER_INTERRUPT) {
