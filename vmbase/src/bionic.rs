@@ -14,7 +14,6 @@
 
 //! Low-level compatibility layer between baremetal Rust and Bionic C functions.
 
-use crate::eprintln;
 use crate::rand::fill_with_entropy;
 use crate::read_sysreg;
 use core::ffi::c_char;
@@ -120,7 +119,7 @@ unsafe extern "C" fn async_safe_fatal_va_list(prefix: *const c_char, format: *co
 
     if let (Ok(prefix), Ok(format)) = (prefix.to_str(), format.to_str()) {
         // We don't bother with printf formatting.
-        eprintln!("FATAL BIONIC ERROR: {prefix}: \"{format}\" (unformatted)");
+        error!("FATAL BIONIC ERROR: {prefix}: \"{format}\" (unformatted)");
     }
 }
 
@@ -216,9 +215,9 @@ extern "C" fn perror(s: *const c_char) {
     let error = cstr_error(get_errno()).to_str().unwrap();
 
     if let Some(prefix) = prefix {
-        eprintln!("{prefix}: {error}");
+        error!("{prefix}: {error}");
     } else {
-        eprintln!("{error}");
+        error!("{error}");
     }
 }
 
