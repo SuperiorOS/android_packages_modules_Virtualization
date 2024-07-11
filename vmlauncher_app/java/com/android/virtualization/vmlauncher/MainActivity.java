@@ -131,6 +131,24 @@ public class MainActivity extends Activity {
                                     VirtualMachineCustomImageConfig.Disk.RODisk(
                                             item.getString("image")));
                         }
+                    } else if (item.has("partitions")) {
+                        boolean writable = item.optBoolean("writable", false);
+                        VirtualMachineCustomImageConfig.Disk disk =
+                                writable
+                                        ? VirtualMachineCustomImageConfig.Disk.RWDisk(null)
+                                        : VirtualMachineCustomImageConfig.Disk.RODisk(null);
+                        JSONArray partitions = item.getJSONArray("partitions");
+                        for (int j = 0; j < partitions.length(); j++) {
+                            JSONObject partition = partitions.getJSONObject(j);
+                            String label = partition.getString("label");
+                            String path = partition.getString("path");
+                            boolean partitionWritable = partition.optBoolean("writable", false);
+                            VirtualMachineCustomImageConfig.Partition p =
+                                    new VirtualMachineCustomImageConfig.Partition(
+                                            label, path, partitionWritable);
+                            disk.addPartition(p);
+                        }
+                        customImageConfigBuilder.addDisk(disk);
                     }
                 }
             }
