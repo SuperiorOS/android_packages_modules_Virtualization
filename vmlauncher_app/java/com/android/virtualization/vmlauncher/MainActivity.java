@@ -321,7 +321,7 @@ public class MainActivity extends Activity {
             } catch (VirtualMachineException e) {
                 vmm.delete(VM_NAME);
                 mVirtualMachine = vmm.create(VM_NAME, config);
-                Log.e(TAG, "error" + e);
+                Log.e(TAG, "error for setting VM config", e);
             }
 
             Log.d(TAG, "vm start");
@@ -385,7 +385,9 @@ public class MainActivity extends Activity {
                             @Override
                             public void surfaceChanged(
                                     SurfaceHolder holder, int format, int width, int height) {
-                                Log.d(TAG, "width: " + width + ", height: " + height);
+                                Log.d(
+                                        TAG,
+                                        "surface changed, width: " + width + ", height: " + height);
                             }
 
                             @Override
@@ -411,8 +413,13 @@ public class MainActivity extends Activity {
                                     runWithDisplayService(
                                             (service) -> service.setCursorStream(pfds[1]));
                                 } catch (Exception e) {
-                                    Log.d("TAG", "failed to run cursor stream handler", e);
+                                    Log.d(TAG, "failed to run cursor stream handler", e);
                                 }
+                                Log.d(
+                                        TAG,
+                                        "ICrosvmAndroidDisplayService.setSurface("
+                                                + holder.getSurface()
+                                                + ")");
                                 runWithDisplayService(
                                         (service) ->
                                                 service.setSurface(
@@ -422,7 +429,12 @@ public class MainActivity extends Activity {
                             @Override
                             public void surfaceChanged(
                                     SurfaceHolder holder, int format, int width, int height) {
-                                Log.d(TAG, "width: " + width + ", height: " + height);
+                                Log.d(
+                                        TAG,
+                                        "cursor surface changed, width: "
+                                                + width
+                                                + ", height: "
+                                                + height);
                             }
 
                             @Override
@@ -430,13 +442,6 @@ public class MainActivity extends Activity {
                                 Log.d(TAG, "ICrosvmAndroidDisplayService.removeSurface()");
                                 runWithDisplayService(
                                         (service) -> service.removeSurface(true /* forCursor */));
-                                if (mCursorStream != null) {
-                                    try {
-                                        mCursorStream.close();
-                                    } catch (IOException e) {
-                                        Log.d(TAG, "failed to close fd", e);
-                                    }
-                                }
                             }
                         });
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -629,9 +634,9 @@ public class MainActivity extends Activity {
                     ICrosvmAndroidDisplayService.Stub.asInterface(vs.waitDisplayService());
             assert service != null;
             func.apply(service);
-            Log.d(TAG, "job done");
+            Log.d(TAG, "display service runs successfully");
         } catch (Exception e) {
-            Log.d(TAG, "error", e);
+            Log.d(TAG, "error on running display service", e);
         }
     }
 
@@ -646,7 +651,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void run() {
-            Log.d(TAG, "CursorHandler");
+            Log.d(TAG, "running CursorHandler");
             try {
                 ByteBuffer byteBuffer = ByteBuffer.allocate(8 /* (x: u32, y: u32) */);
                 byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -667,7 +672,7 @@ public class MainActivity extends Activity {
                             });
                 }
             } catch (IOException e) {
-                Log.e(TAG, e.getMessage());
+                Log.e(TAG, "failed to run CursorHandler", e);
             }
         }
     }
