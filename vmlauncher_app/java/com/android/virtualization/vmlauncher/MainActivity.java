@@ -486,13 +486,13 @@ public class MainActivity extends Activity {
     // Byte 0: Data type
     // Byte 1-3: Padding alignment & Reserved for other use cases in the future
     // Byte 4-7: Data size of the payload
-    private ByteBuffer constructClipboardHeader(byte type, int dataSize) {
+    private byte[] constructClipboardHeader(byte type, int dataSize) {
         ByteBuffer header = ByteBuffer.allocate(8);
         header.clear();
         header.order(ByteOrder.LITTLE_ENDIAN);
         header.put(0, type);
         header.putInt(4, dataSize);
-        return header;
+        return header.array();
     }
 
     private ParcelFileDescriptor connectClipboardSharingServer() {
@@ -515,7 +515,7 @@ public class MainActivity extends Activity {
         }
         ClipData clip = clipboardManager.getPrimaryClip();
         String text = clip.getItemAt(0).getText().toString();
-        ByteBuffer header =
+        byte[] header =
                 constructClipboardHeader(
                         WRITE_CLIPBOARD_TYPE_TEXT_PLAIN, text.getBytes().length + 1);
         ParcelFileDescriptor pfd = connectClipboardSharingServer();
@@ -524,7 +524,7 @@ public class MainActivity extends Activity {
             return false;
         }
         try (OutputStream stream = new AutoCloseOutputStream(pfd)) {
-            stream.write(header.array());
+            stream.write(header);
             stream.write(text.getBytes());
             stream.flush();
             Log.d(TAG, "successfully wrote clipboard data to the VM");
@@ -536,14 +536,14 @@ public class MainActivity extends Activity {
     }
 
     private boolean readClipboardFromVm() {
-        ByteBuffer request = constructClipboardHeader(READ_CLIPBOARD_FROM_VM, 0);
+        byte[] request = constructClipboardHeader(READ_CLIPBOARD_FROM_VM, 0);
         ParcelFileDescriptor pfd = connectClipboardSharingServer();
         if (pfd == null) {
             Log.d(TAG, "file descriptor of ClipboardSharingServer is null");
             return false;
         }
         try (OutputStream output = new AutoCloseOutputStream(pfd)) {
-            output.write(request.array());
+            output.write(request);
             output.flush();
             Log.d(TAG, "successfully send request to the VM for reading clipboard");
         } catch (IOException e) {
