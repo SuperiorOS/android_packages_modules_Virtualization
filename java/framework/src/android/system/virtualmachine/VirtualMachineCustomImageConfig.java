@@ -35,6 +35,7 @@ public class VirtualMachineCustomImageConfig {
     private static final String KEY_PARTITION_LABELS = "partition_labels_";
     private static final String KEY_PARTITION_IMAGES = "partition_images_";
     private static final String KEY_PARTITION_WRITABLES = "partition_writables_";
+    private static final String KEY_PARTITION_GUIDS = "partition_guids_";
     private static final String KEY_DISPLAY_CONFIG = "display_config";
     private static final String KEY_TOUCH = "touch";
     private static final String KEY_KEYBOARD = "keyboard";
@@ -167,9 +168,12 @@ public class VirtualMachineCustomImageConfig {
                             customImageConfigBundle.getStringArray(KEY_PARTITION_IMAGES + i);
                     boolean[] partitionWritables =
                             customImageConfigBundle.getBooleanArray(KEY_PARTITION_WRITABLES + i);
+                    String[] guids =
+                            customImageConfigBundle.getStringArray(KEY_PARTITION_GUIDS + i);
                     for (int j = 0; j < labels.length; j++) {
                         disk.addPartition(
-                                new Partition(labels[j], images[j], partitionWritables[j]));
+                                new Partition(
+                                        labels[j], images[j], partitionWritables[j], guids[j]));
                     }
                     builder.addDisk(disk);
                 }
@@ -210,10 +214,12 @@ public class VirtualMachineCustomImageConfig {
                 List<String> partitionLabels = new ArrayList<>();
                 List<String> partitionImages = new ArrayList<>();
                 List<Boolean> partitionWritables = new ArrayList<>();
+                List<String> partitionGuids = new ArrayList<>();
                 for (Partition p : disks[i].getPartitions()) {
                     partitionLabels.add(p.name);
                     partitionImages.add(p.imagePath);
                     partitionWritables.add(p.writable);
+                    partitionGuids.add(p.guid == null ? "" : p.guid);
                 }
                 pb.putStringArray(KEY_PARTITION_LABELS + i, partitionLabels.toArray(new String[0]));
                 pb.putStringArray(KEY_PARTITION_IMAGES + i, partitionImages.toArray(new String[0]));
@@ -223,6 +229,7 @@ public class VirtualMachineCustomImageConfig {
                     arr[index++] = b;
                 }
                 pb.putBooleanArray(KEY_PARTITION_WRITABLES + i, arr);
+                pb.putStringArray(KEY_PARTITION_GUIDS + i, partitionGuids.toArray(new String[0]));
             }
             pb.putBooleanArray(KEY_DISK_WRITABLES, writables);
             pb.putStringArray(KEY_DISK_IMAGES, images);
@@ -310,11 +317,13 @@ public class VirtualMachineCustomImageConfig {
         public final String name;
         public final String imagePath;
         public final boolean writable;
+        public final String guid;
 
-        public Partition(String name, String imagePath, boolean writable) {
+        public Partition(String name, String imagePath, boolean writable, String guid) {
             this.name = name;
             this.imagePath = imagePath;
             this.writable = writable;
+            this.guid = guid;
         }
     }
 
