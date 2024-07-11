@@ -705,6 +705,7 @@ public final class VirtualMachineConfig {
                                 new File(p.imagePath),
                                 p.writable ? MODE_READ_WRITE : MODE_READ_ONLY);
                 part.writable = p.writable;
+                part.guid = TextUtils.isEmpty(p.guid) ? null : p.guid;
                 partitions.add(part);
             }
             config.disks[i].partitions = partitions.toArray(new Partition[0]);
