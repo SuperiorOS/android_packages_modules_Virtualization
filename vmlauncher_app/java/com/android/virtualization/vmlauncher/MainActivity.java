@@ -143,9 +143,10 @@ public class MainActivity extends Activity {
                             String label = partition.getString("label");
                             String path = partition.getString("path");
                             boolean partitionWritable = partition.optBoolean("writable", false);
+                            String guid = partition.optString("guid");
                             VirtualMachineCustomImageConfig.Partition p =
                                     new VirtualMachineCustomImageConfig.Partition(
-                                            label, path, partitionWritable);
+                                            label, path, partitionWritable, guid);
                             disk.addPartition(p);
                         }
                         customImageConfigBuilder.addDisk(disk);
