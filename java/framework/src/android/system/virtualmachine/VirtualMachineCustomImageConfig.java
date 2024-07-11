@@ -211,25 +211,23 @@ public class VirtualMachineCustomImageConfig {
                 String imagePath = disks[i].imagePath;
                 images[i] = imagePath == null ? "" : imagePath;
 
-                List<String> partitionLabels = new ArrayList<>();
-                List<String> partitionImages = new ArrayList<>();
-                List<Boolean> partitionWritables = new ArrayList<>();
-                List<String> partitionGuids = new ArrayList<>();
-                for (Partition p : disks[i].getPartitions()) {
-                    partitionLabels.add(p.name);
-                    partitionImages.add(p.imagePath);
-                    partitionWritables.add(p.writable);
-                    partitionGuids.add(p.guid == null ? "" : p.guid);
+                int numPartitions = disks[i].getPartitions().size();
+                String[] partitionLabels = new String[numPartitions];
+                String[] partitionImages = new String[numPartitions];
+                boolean[] partitionWritables = new boolean[numPartitions];
+                String[] partitionGuids = new String[numPartitions];
+
+                for (int j = 0; j < numPartitions; j++) {
+                    Partition p = disks[i].getPartitions().get(j);
+                    partitionLabels[j] = p.name;
+                    partitionImages[j] = p.imagePath;
+                    partitionWritables[j] = p.writable;
+                    partitionGuids[j] = p.guid == null ? "" : p.guid;
                 }
-                pb.putStringArray(KEY_PARTITION_LABELS + i, partitionLabels.toArray(new String[0]));
-                pb.putStringArray(KEY_PARTITION_IMAGES + i, partitionImages.toArray(new String[0]));
-                boolean[] arr = new boolean[partitionWritables.size()];
-                int index = 0;
-                for (Boolean b : partitionWritables) {
-                    arr[index++] = b;
-                }
-                pb.putBooleanArray(KEY_PARTITION_WRITABLES + i, arr);
-                pb.putStringArray(KEY_PARTITION_GUIDS + i, partitionGuids.toArray(new String[0]));
+                pb.putStringArray(KEY_PARTITION_LABELS + i, partitionLabels);
+                pb.putStringArray(KEY_PARTITION_IMAGES + i, partitionImages);
+                pb.putBooleanArray(KEY_PARTITION_WRITABLES + i, partitionWritables);
+                pb.putStringArray(KEY_PARTITION_GUIDS + i, partitionGuids);
             }
             pb.putBooleanArray(KEY_DISK_WRITABLES, writables);
             pb.putStringArray(KEY_DISK_IMAGES, images);

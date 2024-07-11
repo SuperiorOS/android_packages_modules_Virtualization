@@ -132,9 +132,9 @@ public class MainActivity extends Activity {
                                             item.getString("image")));
                         }
                     } else if (item.has("partitions")) {
-                        boolean writable = item.optBoolean("writable", false);
+                        boolean diskWritable = item.optBoolean("writable", false);
                         VirtualMachineCustomImageConfig.Disk disk =
-                                writable
+                                diskWritable
                                         ? VirtualMachineCustomImageConfig.Disk.RWDisk(null)
                                         : VirtualMachineCustomImageConfig.Disk.RODisk(null);
                         JSONArray partitions = item.getJSONArray("partitions");
@@ -142,7 +142,8 @@ public class MainActivity extends Activity {
                             JSONObject partition = partitions.getJSONObject(j);
                             String label = partition.getString("label");
                             String path = partition.getString("path");
-                            boolean partitionWritable = partition.optBoolean("writable", false);
+                            boolean partitionWritable =
+                                    diskWritable && partition.optBoolean("writable", false);
                             String guid = partition.optString("guid");
                             VirtualMachineCustomImageConfig.Partition p =
                                     new VirtualMachineCustomImageConfig.Partition(
