@@ -542,12 +542,17 @@ public class MainActivity extends Activity {
             Log.d(TAG, "file descriptor of ClipboardSharingServer is null");
             return false;
         }
-        try (OutputStream output = new AutoCloseOutputStream(pfd)) {
+        try (OutputStream output = new AutoCloseOutputStream(pfd.dup())) {
             output.write(request);
             output.flush();
             Log.d(TAG, "successfully send request to the VM for reading clipboard");
         } catch (IOException e) {
             Log.e(TAG, "failed to send request to the VM for read clipboard", e);
+            try {
+                pfd.close();
+            } catch (IOException err) {
+                Log.e(TAG, "failed to close file descriptor", err);
+            }
             return false;
         }
 
