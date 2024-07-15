@@ -1142,9 +1142,29 @@ public class VirtualMachine implements AutoCloseable {
 
         int x = (int) event.getRawX();
         int y = (int) event.getRawY();
+        if (event.getAction() == MotionEvent.ACTION_BUTTON_PRESS
+                || event.getAction() == MotionEvent.ACTION_BUTTON_RELEASE) {
+            short BTN_LEFT = 0x110;
+            short keyCode;
+            switch (event.getActionButton()) {
+                case MotionEvent.BUTTON_PRIMARY:
+                    keyCode = BTN_LEFT;
+                    break;
+                default:
+                    Log.d(TAG, event.toString());
+                    return false;
+            }
+            return writeEventsToSock(
+                    mMouseSock,
+                    Arrays.asList(
+                            new InputEvent(
+                                    EV_KEY,
+                                    keyCode,
+                                    event.getAction() == MotionEvent.ACTION_BUTTON_PRESS ? 1 : 0),
+                            new InputEvent(EV_SYN, SYN_REPORT, 0)));
+        }
         boolean down = event.getAction() != MotionEvent.ACTION_UP;
-
-        // TODO(b/347253952): support multi-touch and button click
+        // TODO(b/347253952): support multi-touch
         return writeEventsToSock(
                 mTrackpadSock,
                 Arrays.asList(
