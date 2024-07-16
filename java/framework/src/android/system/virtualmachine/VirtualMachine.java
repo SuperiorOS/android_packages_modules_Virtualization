@@ -903,11 +903,11 @@ public class VirtualMachine implements AutoCloseable {
             if (vmConfig.getCustomImageConfig().useTouch()) {
                 ParcelFileDescriptor[] pfds = ParcelFileDescriptor.createSocketPair();
                 mTouchSock = pfds[0];
-                InputDevice.SingleTouch t = new InputDevice.SingleTouch();
+                InputDevice.MultiTouch t = new InputDevice.MultiTouch();
                 t.width = rawConfig.displayConfig.width;
                 t.height = rawConfig.displayConfig.height;
                 t.pfd = pfds[1];
-                inputDevices.add(InputDevice.singleTouch(t));
+                inputDevices.add(InputDevice.multiTouch(t));
             }
             if (vmConfig.getCustomImageConfig().useKeyboard()) {
                 ParcelFileDescriptor[] pfds = ParcelFileDescriptor.createSocketPair();
@@ -1061,7 +1061,7 @@ public class VirtualMachine implements AutoCloseable {
     }
 
     /** @hide */
-    public boolean sendSingleTouchEvent(MotionEvent event) {
+    public boolean sendMultiTouchEvent(MotionEvent event) {
         if (mTouchSock == null) {
             Log.d(TAG, "mTouchSock == null");
             return false;
@@ -1074,17 +1074,56 @@ public class VirtualMachine implements AutoCloseable {
         short ABS_X = 0x00;
         short ABS_Y = 0x01;
         short SYN_REPORT = 0x00;
+        short ABS_MT_SLOT = 0x2f;
+        short ABS_MT_POSITION_X = 0x35;
+        short ABS_MT_POSITION_Y = 0x36;
+        short ABS_MT_TRACKING_ID = 0x39;
 
-        int x = (int) event.getX();
-        int y = (int) event.getY();
-        boolean down = event.getAction() != MotionEvent.ACTION_UP;
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_MOVE:
+                List<InputEvent> events =
+                        new ArrayList<>(
+                                event.getPointerCount() * 6 /*InputEvent per a pointer*/
+                                        + 1 /*SYN*/);
+                for (int actionIdx = 0; actionIdx < event.getPointerCount(); actionIdx++) {
+                    int pointerId = event.getPointerId(actionIdx);
+                    int x = (int) event.getRawX(actionIdx);
+                    int y = (int) event.getRawY(actionIdx);
+                    events.add(new InputEvent(EV_ABS, ABS_MT_SLOT, pointerId));
+                    events.add(new InputEvent(EV_ABS, ABS_MT_TRACKING_ID, pointerId));
+                    events.add(new InputEvent(EV_ABS, ABS_MT_POSITION_X, x));
+                    events.add(new InputEvent(EV_ABS, ABS_MT_POSITION_Y, y));
+                    events.add(new InputEvent(EV_ABS, ABS_X, x));
+                    events.add(new InputEvent(EV_ABS, ABS_Y, y));
+                }
+                events.add(new InputEvent(EV_SYN, SYN_REPORT, 0));
+                return writeEventsToSock(mTouchSock, events);
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                break;
+            default:
+                return false;
+        }
 
+        boolean down =
+                event.getActionMasked() == MotionEvent.ACTION_DOWN
+                        || event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN;
+        int actionIdx = event.getActionIndex();
+        int pointerId = event.getPointerId(actionIdx);
+        int x = (int) event.getRawX(actionIdx);
+        int y = (int) event.getRawY(actionIdx);
         return writeEventsToSock(
                 mTouchSock,
                 Arrays.asList(
+                        new InputEvent(EV_KEY, BTN_TOUCH, down ? 1 : 0),
+                        new InputEvent(EV_ABS, ABS_MT_SLOT, pointerId),
+                        new InputEvent(EV_ABS, ABS_MT_TRACKING_ID, down ? pointerId : -1),
+                        new InputEvent(EV_ABS, ABS_MT_POSITION_X, x),
+                        new InputEvent(EV_ABS, ABS_MT_POSITION_Y, y),
                         new InputEvent(EV_ABS, ABS_X, x),
                         new InputEvent(EV_ABS, ABS_Y, y),
-                        new InputEvent(EV_KEY, BTN_TOUCH, down ? 1 : 0),
                         new InputEvent(EV_SYN, SYN_REPORT, 0)));
     }
 

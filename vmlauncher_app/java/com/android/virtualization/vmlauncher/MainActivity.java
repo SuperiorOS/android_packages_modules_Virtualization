@@ -352,7 +352,7 @@ public class MainActivity extends Activity {
                     if (mVirtualMachine == null) {
                         return false;
                     }
-                    return mVirtualMachine.sendSingleTouchEvent(event);
+                    return mVirtualMachine.sendMultiTouchEvent(event);
                 });
         surfaceView.requestUnbufferedDispatch(InputDevice.SOURCE_ANY);
         surfaceView.setOnCapturedPointerListener(
