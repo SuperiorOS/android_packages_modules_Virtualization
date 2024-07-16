@@ -310,7 +310,7 @@ public class VirtualMachine implements AutoCloseable {
     /** Running instance of virtmgr that hosts VirtualizationService for this VM. */
     @NonNull private final VirtualizationService mVirtualizationService;
 
-    @NonNull private final MemoryManagementCallbacks mMemoryManagementCallbacks;
+    private final MemoryManagementCallbacks mMemoryManagementCallbacks;
 
     @NonNull private final Context mContext;
 
@@ -441,7 +441,6 @@ public class VirtualMachine implements AutoCloseable {
         mInstanceFilePath = new File(thisVmDir, INSTANCE_IMAGE_FILE);
         mIdsigFilePath = new File(thisVmDir, IDSIG_FILE);
         mExtraApks = setupExtraApks(context, config, thisVmDir);
-        mMemoryManagementCallbacks = new MemoryManagementCallbacks();
         mContext = context;
         mEncryptedStoreFilePath =
                 (config.isEncryptedStorageEnabled())
@@ -451,6 +450,14 @@ public class VirtualMachine implements AutoCloseable {
         mVmOutputCaptured = config.isVmOutputCaptured();
         mVmConsoleInputSupported = config.isVmConsoleInputSupported();
         mConnectVmConsole = config.isConnectVmConsole();
+
+        VirtualMachineCustomImageConfig customImageConfig;
+        customImageConfig = config.getCustomImageConfig();
+        if (customImageConfig == null || customImageConfig.useAutoMemoryBalloon()) {
+            mMemoryManagementCallbacks = new MemoryManagementCallbacks();
+        } else {
+            mMemoryManagementCallbacks = null;
+        }
     }
 
     /**
@@ -820,7 +827,9 @@ public class VirtualMachine implements AutoCloseable {
      */
     @GuardedBy("mLock")
     private void dropVm() {
-        mContext.unregisterComponentCallbacks(mMemoryManagementCallbacks);
+        if (mMemoryManagementCallbacks != null) {
+            mContext.unregisterComponentCallbacks(mMemoryManagementCallbacks);
+        }
         mVirtualMachine = null;
     }
 
@@ -1293,6 +1302,46 @@ public class VirtualMachine implements AutoCloseable {
                         new InputEvent(EV_SYN, SYN_REPORT, 0)));
     }
 
+    /** @hide */
+    public long getMemoryBalloon() {
+        long bytes = 0;
+
+        if (mMemoryManagementCallbacks != null) {
+            Log.d(TAG, "Auto balloon enabled in getMemoryBalloon");
+            return bytes;
+        }
+
+        synchronized (mLock) {
+            try {
+                if (mVirtualMachine != null) {
+                    bytes = mVirtualMachine.getMemoryBalloon();
+                }
+            } catch (RemoteException e) {
+                Log.w(TAG, "Cannot getMemoryBalloon", e);
+            }
+        }
+
+        return bytes;
+    }
+
+    /** @hide */
+    public void setMemoryBalloon(long bytes) {
+        if (mMemoryManagementCallbacks != null) {
+            Log.d(TAG, "Auto balloon enabled in setMemoryBalloon");
+            return;
+        }
+
+        synchronized (mLock) {
+            try {
+                if (mVirtualMachine != null) {
+                    mVirtualMachine.setMemoryBalloon(bytes);
+                }
+            } catch (RemoteException e) {
+                Log.w(TAG, "Cannot setMemoryBalloon", e);
+            }
+        }
+    }
+
     private boolean writeEventsToSock(ParcelFileDescriptor sock, List<InputEvent> evtList) {
         ByteBuffer byteBuffer =
                 ByteBuffer.allocate(8 /* (type: u16 + code: u16 + value: i32) */ * evtList.size());
@@ -1444,7 +1493,9 @@ public class VirtualMachine implements AutoCloseable {
                 mVirtualMachine =
                         service.createVm(vmConfigParcel, consoleOutFd, consoleInFd, mLogWriter);
                 mVirtualMachine.registerCallback(new CallbackTranslator(service));
-                mContext.registerComponentCallbacks(mMemoryManagementCallbacks);
+                if (mMemoryManagementCallbacks != null) {
+                    mContext.registerComponentCallbacks(mMemoryManagementCallbacks);
+                }
                 if (mConnectVmConsole) {
                     mVirtualMachine.setHostConsoleName(getHostConsoleName());
                 }
