@@ -1192,6 +1192,25 @@ public class VirtualMachine implements AutoCloseable {
     }
 
     /** @hide */
+    public boolean sendTabletModeEvent(boolean tabletMode) {
+        if (mSwitchesSock == null) {
+            Log.d(TAG, "mSwitcheSock == null");
+            return false;
+        }
+
+        // from include/uapi/linux/input-event-codes.h in the kernel.
+        short EV_SYN = 0x00;
+        short EV_SW = 0x05;
+        short SW_TABLET_MODE = 0x01;
+        short SYN_REPORT = 0x00;
+        return writeEventsToSock(
+                mSwitchesSock,
+                Arrays.asList(
+                        new InputEvent(EV_SW, SW_TABLET_MODE, tabletMode ? 1 : 0),
+                        new InputEvent(EV_SYN, SYN_REPORT, 0)));
+    }
+
+    /** @hide */
     public boolean sendTrackpadEvent(MotionEvent event) {
         try {
             mInputEventQueue.add(Pair.create(InputEventType.TRACKPAD, event));
