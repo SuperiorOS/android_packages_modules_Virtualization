@@ -998,7 +998,8 @@ public class VirtualMachine implements AutoCloseable {
     /** @hide */
     public boolean sendMouseEvent(MotionEvent event) {
         try {
-            mInputEventQueue.add(Pair.create(InputEventType.MOUSE, event));
+            mInputEventQueue.add(
+                    Pair.create(InputEventType.MOUSE, MotionEvent.obtainNoHistory(event)));
             return true;
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -1097,7 +1098,8 @@ public class VirtualMachine implements AutoCloseable {
     /** @hide */
     public boolean sendMultiTouchEvent(MotionEvent event) {
         try {
-            mInputEventQueue.add(Pair.create(InputEventType.TOUCH, event));
+            mInputEventQueue.add(
+                    Pair.create(InputEventType.TOUCH, MotionEvent.obtainNoHistory(event)));
             return true;
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -1213,7 +1215,8 @@ public class VirtualMachine implements AutoCloseable {
     /** @hide */
     public boolean sendTrackpadEvent(MotionEvent event) {
         try {
-            mInputEventQueue.add(Pair.create(InputEventType.TRACKPAD, event));
+            mInputEventQueue.add(
+                    Pair.create(InputEventType.TRACKPAD, MotionEvent.obtainNoHistory(event)));
             return true;
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -1560,6 +1563,7 @@ public class VirtualMachine implements AutoCloseable {
                                             sendMouseEventInternal(event.second);
                                             break;
                                     }
+                                    event.second.recycle();
                                 } catch (Exception e) {
                                     Log.e(TAG, e.toString());
                                 }
