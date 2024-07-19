@@ -43,7 +43,6 @@ import android.system.virtualmachine.VirtualMachineException;
 import android.system.virtualmachine.VirtualMachineManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
@@ -200,20 +199,32 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
                 customImageConfigBuilder.setGpuConfig(gpuConfigBuilder.build());
             }
 
-            configBuilder.setMemoryBytes(8L * 1024 * 1024 * 1024 /* 8 GB */);
+            long memoryMib = 1024; // 1GB by default
+            if (json.has("memory_mib")) {
+                memoryMib = json.getLong("memory_mib");
+            }
+            configBuilder.setMemoryBytes(memoryMib * 1024 * 1024);
+
             WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
-            Rect windowSize = windowMetrics.getBounds();
-            int dpi = (int) (DisplayMetrics.DENSITY_DEFAULT * windowMetrics.getDensity());
+            float dpi = DisplayMetrics.DENSITY_DEFAULT * windowMetrics.getDensity();
+            int refreshRate = (int) getDisplay().getRefreshRate();
+            if (json.has("display")) {
+                JSONObject display = json.getJSONObject("display");
+                if (display.has("scale")) {
+                    dpi *= (float) display.getDouble("scale");
+                }
+                if (display.has("refresh_rate")) {
+                    refreshRate = display.getInt("refresh_rate");
+                }
+            }
+            int dpiInt = (int) dpi;
             DisplayConfig.Builder displayConfigBuilder = new DisplayConfig.Builder();
+            Rect windowSize = windowMetrics.getBounds();
             displayConfigBuilder.setWidth(windowSize.right);
             displayConfigBuilder.setHeight(windowSize.bottom);
-            displayConfigBuilder.setHorizontalDpi(dpi);
-            displayConfigBuilder.setVerticalDpi(dpi);
-
-            Display display = getDisplay();
-            if (display != null) {
-                displayConfigBuilder.setRefreshRate((int) display.getRefreshRate());
-            }
+            displayConfigBuilder.setHorizontalDpi(dpiInt);
+            displayConfigBuilder.setVerticalDpi(dpiInt);
+            displayConfigBuilder.setRefreshRate(refreshRate);
 
             customImageConfigBuilder.setDisplayConfig(displayConfigBuilder.build());
             customImageConfigBuilder.useTouch(true);
