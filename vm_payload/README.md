@@ -2,7 +2,7 @@
 
 This directory contains the definition of the VM Payload API. This is a native
 API, exposed as a set of C functions, available to payload code running inside a
-[Microdroid](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/microdroid/README.md)
+[Microdroid](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/build/microdroid/README.md)
 VM.
 
 Note that only native code is supported in Microdroid, so no Java APIs are
