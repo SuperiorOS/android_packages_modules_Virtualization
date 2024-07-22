@@ -68,7 +68,7 @@ For detailed information and usage examples, please refer to the
 [demo app][demo].
 
 [api]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/libs/libvm_payload/README.md
-[demo]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/service_vm/demo_apk
+[demo]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/android/VmAttestationDemoApp
 
 ## Output
 
