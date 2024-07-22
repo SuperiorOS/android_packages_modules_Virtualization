@@ -27,7 +27,7 @@ attestation process into two parts:
 1.  Attesting the RKP VM against the RKP server.
 2.  Attesting the pVM against the RKP VM.
 
-[rkpvm]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/service_vm/README.md
+[rkpvm]: https://android.googlesource.com/platform/packages/modules/Virtualization/+/main/docs/service_vm.md
 
 ### RKP VM attestation
 
