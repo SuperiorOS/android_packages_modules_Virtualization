@@ -18,7 +18,7 @@ across all reboots.
 
 [Rialto](../rialto) is used as the bare-metal kernel for the Service VM. It
 shares some low-level setup, such as memory management and virtio device
-parsing, with pvmfw. The common setup code is grouped in [vmbase/](../vmbase).
+parsing, with pvmfw. The common setup code is grouped in [vmbase/](../libs/libvmbase).
 
 ## Functionality
 
