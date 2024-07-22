@@ -1013,7 +1013,8 @@ public final class VirtualMachineConfig {
         /**
          * Sets the path within the APK to the payload config file that defines software aspects of
          * the VM. The file is a JSON file; see
-         * packages/modules/Virtualization/microdroid/payload/config/src/lib.rs for the format.
+         * packages/modules/Virtualization/libs/libmicrodroid_payload_metadata/config/src/lib.rs for
+         * the format.
          *
          * @hide
          */
