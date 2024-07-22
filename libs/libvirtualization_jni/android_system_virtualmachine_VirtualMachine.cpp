@@ -49,7 +49,7 @@ void throwIOException(JNIEnv *env, const std::string &msg) {
 
 extern "C" JNIEXPORT jobject JNICALL
 Java_android_system_virtualmachine_VirtualMachine_nativeConnectToVsockServer(
-        JNIEnv* env, [[maybe_unused]] jclass clazz, jobject vmBinder, jint port) {
+        JNIEnv *env, [[maybe_unused]] jclass clazz, jobject vmBinder, jint port) {
     using aidl::android::system::virtualizationservice::IVirtualMachine;
     using ndk::ScopedFileDescriptor;
     using ndk::SpAIBinder;
@@ -59,8 +59,8 @@ Java_android_system_virtualmachine_VirtualMachine_nativeConnectToVsockServer(
     std::tuple args{env, vm.get(), port};
     using Args = decltype(args);
 
-    auto requestFunc = [](void* param) {
-        auto [env, vm, port] = *static_cast<Args*>(param);
+    auto requestFunc = [](void *param) {
+        auto [env, vm, port] = *static_cast<Args *>(param);
 
         ScopedFileDescriptor fd;
         if (auto status = vm->connectVsock(port, &fd); !status.isOk()) {
