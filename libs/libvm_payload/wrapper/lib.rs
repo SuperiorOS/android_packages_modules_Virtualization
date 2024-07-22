@@ -17,7 +17,7 @@
 //! Rust wrapper for the VM Payload API, allowing virtual machine payload code to be written in
 //! Rust. This wraps the raw C API, accessed via bindgen, into a more idiomatic Rust interface.
 //!
-//! See `https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/Virtualization/vm_payload/README.md`
+//! See `https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/Virtualization/libs/libvm_payload/README.md`
 //! for more information on the VM Payload API.
 
 mod attestation;

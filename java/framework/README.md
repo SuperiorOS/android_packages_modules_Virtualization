@@ -6,7 +6,7 @@ payload) within it.
 
 There is more information on AVF [here](../README.md). To see how to package the
 payload code that is to run inside a VM, and the native API available to it, see
-the [VM Payload API](../vm_payload/README.md)
+the [VM Payload API](../libs/libvm_payload/README.md)
 
 The API classes are all in the
 [`android.system.virtualmachine`](src/android/system/virtualmachine) package.
@@ -137,10 +137,10 @@ are called when the following events happen:
 - `onPayloadStarted()`: The VM payload is about to be run.
 - `onPayloadReady()`: The VM payload is running and ready to accept
   connections. (This notification is triggered by the payload code, using the
-  [`AVmPayload_notifyPayloadReady()`](../vm_payload/include/vm_payload.h)
+  [`AVmPayload_notifyPayloadReady()`](../libs/libvm_payload/include/vm_payload.h)
   function.)
 - `onPayloadFinished()`: The VM payload has exited normally. The exit code of
-  the VM (the value returned by [`AVmPayload_main()`](../vm_payload/README.md))
+  the VM (the value returned by [`AVmPayload_main()`](../libs/libvm_payload/README.md))
   is supplied as a parameter.
 - `onError()`: The VM failed; something went wrong. An error code and
   human-readable message are provided which may help diagnosing the problem.
@@ -195,7 +195,7 @@ instance with a new secret.
 The payload code is not given direct access to the VM secret, but an API is
 provided to allow deterministically deriving further secrets from it,
 e.g. encryption or signing keys. See
-[`AVmPayload_getVmInstanceSecret()`](../vm_payload/include/vm_payload.h).
+[`AVmPayload_getVmInstanceSecret()`](../libs/libvm_payload/include/vm_payload.h).
 
 Some VM configuration changes are allowed that don’t affect the identity -
 e.g. changing the number of CPUs or the amount of memory allocated to the
@@ -304,7 +304,7 @@ A better strategy might be to wait for the VM to exit cleanly (e.g. waiting for
 the `onStopped()` callback).
 
 Then you can arrange for your VM payload code to exit when it has finished its
-task (by returning from [`AVmPayload_main()`](../vm_payload/README.md), or
+task (by returning from [`AVmPayload_main()`](../libs/libvm_payload/README.md), or
 calling `exit()`). Alternatively you could exit when you receive a request to do
 so from the app, e.g. via binder.
 
@@ -330,7 +330,7 @@ storage filesystem of up to a specified size, using the
 builder.
 
 Inside the VM this storage is mounted at a path that can be retrieved via the
-[`AVmPayload_getEncryptedStoragePath()`](../vm_payload/include/vm_payload.h)
+[`AVmPayload_getEncryptedStoragePath()`](../libs/libvm_payload/include/vm_payload.h)
 function. The VM can create sub-directories and read and write files here. Any
 data written is persisted and should be available next time the VM is run. (An
 automatic sync is done when the payload exits normally.)

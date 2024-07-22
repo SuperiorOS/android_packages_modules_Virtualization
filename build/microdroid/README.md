@@ -41,7 +41,7 @@ with `aosp_x86_64`.
 ## Building an app
 
 A [vm
-payload](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/vm_payload/)
+payload](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/libs/libvm_payload/)
 is a shared library file that gets executed in microdroid. It is packaged as
 part of an Android application.  The library should have an entry point
 `AVmPayload_main` as shown below:

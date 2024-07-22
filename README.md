@@ -24,7 +24,7 @@ AVF components:
 
 AVF APIs:
 * [Java API](java/framework/README.md)
-* [VM Payload API](vm_payload/README.md)
+* [VM Payload API](libs/libvm_payload/README.md)
 
 How-Tos:
 * [Building and running a demo app in Java](android/MicrodroidDemoApp/README.md)
