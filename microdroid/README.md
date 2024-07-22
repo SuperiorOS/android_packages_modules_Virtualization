@@ -182,7 +182,7 @@ that a [bootloader] can extract the value and populate into VM reference DT.
 [fstab.microdroid]: fstab.microdroid
 [dm-verity]: https://source.android.com/docs/security/features/verifiedboot/dm-verity
 [DTBO]: https://android.googlesource.com/platform/external/dtc/+/refs/heads/main/Documentation/dt-object-internal.txt
-[pvmfw config data]: ../pvmfw/README.md#configuration-data-format
+[pvmfw config data]: ../guest/pvmfw/README.md#configuration-data-format
 [bootloader]: https://source.android.com/docs/core/architecture/bootloader
 [Makefile]: https://cs.android.com/android/platform/superproject/main/+/main:build/make/core/Makefile
 

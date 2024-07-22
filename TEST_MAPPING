@@ -120,7 +120,7 @@
       "path": "packages/modules/Virtualization/guest/microdroid_manager"
     },
     {
-      "path": "packages/modules/Virtualization/pvmfw"
+      "path": "packages/modules/Virtualization/guest/pvmfw"
     },
     {
       "path": "packages/modules/Virtualization/rialto"
