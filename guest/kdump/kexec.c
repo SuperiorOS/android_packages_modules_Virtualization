@@ -39,7 +39,7 @@ static const char *INITRD = "/system/etc/microdroid_crashdump_initrd.img";
 static const char *CMDLINE = "1 panic=-1 rdinit=/bin/crashdump nr_cpus=1 reset_devices "
                              "console=hvc0 " EARLYCON;
 
-static int open_checked(const char* path) {
+static int open_checked(const char *path) {
     int fd = open(path, O_RDONLY);
     if (fd == -1) {
         fprintf(stderr, "Failed to open %s: %s\n", path, strerror(errno));
