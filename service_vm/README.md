@@ -30,7 +30,7 @@ serialized in CBOR format and transmitted over a virtio-vsock device.
 -   [./requests](./requests) contains the library that processes the requests.
 -   [./manager](./manager) manages the Service VM session, ensuring that only
     one Service VM is active at any given time. The
-    [virtualizationservice](../virtualizationservice) process owns and manages
+    [virtualizationservice](../android/virtualizationservice) process owns and manages
     the Service VM instance.
 
 ### RKP VM (Remote Key Provisioning Virtual Machine)
