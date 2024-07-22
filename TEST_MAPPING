@@ -144,7 +144,7 @@
       "path": "packages/modules/Virtualization/vmbase"
     },
     {
-      "path": "packages/modules/Virtualization/zipfuse"
+      "path": "packages/modules/Virtualization/guest/zipfuse"
     }
   ]
 }
