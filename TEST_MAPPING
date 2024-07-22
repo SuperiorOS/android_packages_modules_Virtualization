@@ -132,7 +132,7 @@
       "path": "packages/modules/Virtualization/libs/libservice_vm_comm"
     },
     {
-      "path": "packages/modules/Virtualization/service_vm/requests"
+      "path": "packages/modules/Virtualization/libs/libservice_vm_requests"
     },
     {
       "path": "packages/modules/Virtualization/android/virtualizationservice"
