@@ -138,7 +138,7 @@
       "path": "packages/modules/Virtualization/android/virtualizationservice"
     },
     {
-      "path": "packages/modules/Virtualization/vm"
+      "path": "packages/modules/Virtualization/android/vm"
     },
     {
       "path": "packages/modules/Virtualization/vmbase"
