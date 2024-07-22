@@ -7,7 +7,7 @@
         errorLine1="        if (!vmConfig.getExtraApks().isEmpty()) {"
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="packages/modules/Virtualization/java/framework/src/android/system/virtualmachine/VirtualMachine.java"
+            file="packages/modules/Virtualization/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachine.java"
             line="1105"
             column="14"/>
     </issue>
@@ -18,7 +18,7 @@
         errorLine1="        List&lt;String> extraApks = config.getExtraApks();"
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="packages/modules/Virtualization/java/framework/src/android/system/virtualmachine/VirtualMachine.java"
+		file="packages/modules/Virtualization/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachine.java"
             line="1730"
             column="34"/>
     </issue>
@@ -29,7 +29,7 @@
         errorLine1="            builder.setVendorDiskImage(new File(vendorDiskImagePath));"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="packages/modules/Virtualization/java/framework/src/android/system/virtualmachine/VirtualMachineConfig.java"
+		file="packages/modules/Virtualization/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachineConfig.java"
             line="367"
             column="13"/>
     </issue>
@@ -40,7 +40,7 @@
         errorLine1="        builder.setOs(b.getString(KEY_OS));"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="packages/modules/Virtualization/java/framework/src/android/system/virtualmachine/VirtualMachineConfig.java"
+		file="packages/modules/Virtualization/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachineConfig.java"
             line="370"
             column="9"/>
     </issue>
@@ -51,7 +51,7 @@
         errorLine1="                builder.addExtraApk(extraApk);"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="packages/modules/Virtualization/java/framework/src/android/system/virtualmachine/VirtualMachineConfig.java"
+		file="packages/modules/Virtualization/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachineConfig.java"
             line="375"
             column="17"/>
     </issue>
@@ -62,7 +62,7 @@
         errorLine1="        @OsName private final String DEFAULT_OS = MICRODROID;"
         errorLine2="                                                  ~~~~~~~~~~">
         <location
-            file="packages/modules/Virtualization/java/framework/src/android/system/virtualmachine/VirtualMachineConfig.java"
+		file="packages/modules/Virtualization/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachineConfig.java"
             line="855"
             column="51"/>
     </issue>

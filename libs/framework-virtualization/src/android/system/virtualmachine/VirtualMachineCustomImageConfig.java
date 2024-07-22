@@ -211,8 +211,6 @@ public class VirtualMachineCustomImageConfig {
         return builder.build();
     }
 
-
-
     PersistableBundle toPersistableBundle() {
         PersistableBundle pb = new PersistableBundle();
         pb.putString(KEY_NAME, this.name);
