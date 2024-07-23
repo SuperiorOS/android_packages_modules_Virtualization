@@ -59,6 +59,20 @@ private:
     std::vector<uint8_t> mBufferBits;
 };
 
+static Result<void> copyBuffer(ANativeWindow_Buffer& from, ANativeWindow_Buffer& to) {
+    if (from.width != to.width || from.height != to.height) {
+        return Error() << "dimension mismatch. from=(" << from.width << ", " << from.height << ") "
+                       << "to=(" << to.width << ", " << to.height << ")";
+    }
+    uint32_t* dst = reinterpret_cast<uint32_t*>(to.bits);
+    uint32_t* src = reinterpret_cast<uint32_t*>(from.bits);
+    size_t bytes_on_line = to.width * 4; // 4 bytes per pixel
+    for (int32_t h = 0; h < to.height; h++) {
+        memcpy(dst + (h * to.stride), src + (h * from.stride), bytes_on_line);
+    }
+    return {};
+}
+
 // Wrapper which contains the latest available Surface/ANativeWindow from the DisplayService, if
 // available. A Surface/ANativeWindow may not always be available if, for example, the VmLauncherApp
 // on the other end of the DisplayService is not in the foreground / is paused.
@@ -66,7 +80,7 @@ class AndroidDisplaySurface {
 public:
     AndroidDisplaySurface(const std::string& name) : mName(name) {}
 
-    void setSurface(Surface* surface) {
+    void setNativeSurface(Surface* surface) {
         {
             std::lock_guard lk(mSurfaceMutex);
             mNativeSurface = std::make_unique<Surface>(surface->release());
@@ -97,11 +111,13 @@ public:
                 .height = height,
         };
 
-        auto ret = mSinkBuffer.configure(width, height, kFormat);
-        if (!ret.ok()) {
+        if (auto ret = mSinkBuffer.configure(width, height, kFormat); !ret.ok()) {
             return Error() << "Failed to configure sink buffer: " << ret.error();
         }
-        return ret;
+        if (auto ret = mSavedFrameBuffer.configure(width, height, kFormat); !ret.ok()) {
+            return Error() << "Failed to configure saved frame buffer: " << ret.error();
+        }
+        return {};
     }
 
     void waitForNativeSurface() {
@@ -142,6 +158,7 @@ public:
         if (ANativeWindow_lock(anw, out_buffer, nullptr) != 0) {
             return Error() << "Failed to lock window";
         }
+        mLastBuffer = *out_buffer;
         return {};
     }
 
@@ -166,6 +183,58 @@ public:
         return {};
     }
 
+    // Saves the last frame drawn
+    Result<void> saveFrame() {
+        std::unique_lock lk(mSurfaceMutex);
+        if (auto ret = copyBuffer(mLastBuffer, mSavedFrameBuffer); !ret.ok()) {
+            return Error() << "Failed to copy frame: " << ret.error();
+        }
+        return {};
+    }
+
+    // Draws the saved frame
+    Result<void> drawSavedFrame() {
+        std::unique_lock lk(mSurfaceMutex);
+        Surface* surface = mNativeSurface.get();
+        if (surface == nullptr) {
+            return Error() << "Surface not ready";
+        }
+
+        ANativeWindow* anw = surface->get();
+        if (anw == nullptr) {
+            return Error() << "Failed to get ANativeWindow";
+        }
+
+        // TODO: dedup this and the one in lock(...)
+        if (mNativeSurfaceNeedsConfiguring) {
+            if (!mRequestedSurfaceDimensions) {
+                return Error() << "Surface dimension is not configured yet!";
+            }
+            const auto& dims = *mRequestedSurfaceDimensions;
+
+            // Ensure locked buffers have our desired format.
+            if (ANativeWindow_setBuffersGeometry(anw, dims.width, dims.height, kFormat) != 0) {
+                return Error() << "Failed to set buffer geometry.";
+            }
+
+            mNativeSurfaceNeedsConfiguring = false;
+        }
+
+        ANativeWindow_Buffer buf;
+        if (ANativeWindow_lock(anw, &buf, nullptr) != 0) {
+            return Error() << "Failed to lock window";
+        }
+
+        if (auto ret = copyBuffer(mSavedFrameBuffer, buf); !ret.ok()) {
+            return Error() << "Failed to copy frame: " << ret.error();
+        }
+
+        if (ANativeWindow_unlockAndPost(anw) != 0) {
+            return Error() << "Failed to unlock and post window";
+        }
+        return {};
+    }
+
     const std::string& name() const { return mName; }
 
 private:
@@ -181,7 +250,19 @@ private:
     std::condition_variable mNativeSurfaceReady;
     bool mNativeSurfaceNeedsConfiguring = true;
 
+    // Buffer which crosvm uses when in background. This is just to not fail crosvm even when
+    // Android-side Surface doesn't exist. The content drawn here is never displayed on the physical
+    // screen.
     SinkANativeWindow_Buffer mSinkBuffer;
+
+    // Buffer which is currently allocated for crosvm to draw onto. This holds the last frame. This
+    // is what gets displayed on the physical screen.
+    ANativeWindow_Buffer mLastBuffer;
+
+    // Copy of mLastBuffer made by the call saveFrameForSurface. This holds the last good (i.e.
+    // non-blank) frame before the VM goes background. When the VM is brought up to foreground,
+    // this is drawn to the physical screen until the VM starts to emit actual frames.
+    SinkANativeWindow_Buffer mSavedFrameBuffer;
 
     struct Rect {
         uint32_t width = 0;
@@ -196,7 +277,7 @@ public:
     virtual ~DisplayService() = default;
 
     ndk::ScopedAStatus setSurface(Surface* surface, bool forCursor) override {
-        getSurface(forCursor).setSurface(surface);
+        getSurface(forCursor).setNativeSurface(surface);
         return ::ndk::ScopedAStatus::ok();
     }
 
@@ -208,6 +289,24 @@ public:
     ndk::ScopedFileDescriptor& getCursorStream() { return mCursorStream; }
     ndk::ScopedAStatus setCursorStream(const ndk::ScopedFileDescriptor& in_stream) {
         mCursorStream = ndk::ScopedFileDescriptor(dup(in_stream.get()));
+        return ::ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus saveFrameForSurface(bool forCursor) override {
+        if (auto ret = getSurface(forCursor).saveFrame(); !ret.ok()) {
+            std::string msg = std::format("Failed to save frame: {}", ret.error().message());
+            return ::ndk::ScopedAStatus(
+                    AStatus_fromServiceSpecificErrorWithMessage(-1, msg.c_str()));
+        }
+        return ::ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus drawSavedFrameForSurface(bool forCursor) override {
+        if (auto ret = getSurface(forCursor).drawSavedFrame(); !ret.ok()) {
+            std::string msg = std::format("Failed to draw saved frame: {}", ret.error().message());
+            return ::ndk::ScopedAStatus(
+                    AStatus_fromServiceSpecificErrorWithMessage(-1, msg.c_str()));
+        }
         return ::ndk::ScopedAStatus::ok();
     }
 
