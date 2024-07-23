@@ -68,7 +68,7 @@ private:
 // other end of the DisplayService is not in the foreground / is paused.
 class AndroidDisplaySurface {
 public:
-    AndroidDisplaySurface() = default;
+    AndroidDisplaySurface(const std::string& name) : mName(name) {}
     virtual ~AndroidDisplaySurface() = default;
 
     void setSurface(Surface* surface) {
@@ -171,11 +171,15 @@ public:
         return {};
     }
 
+    const std::string& name() const { return mName; }
+
 private:
     // Note: crosvm always uses BGRA8888 or BGRX8888. See devices/src/virtio/gpu/mod.rs in
     // crosvm where the SetScanoutBlob command is handled. Let's use BGRA not BGRX with a hope
     // that we will need alpha blending for the cursor surface.
     static constexpr const int kFormat = HAL_PIXEL_FORMAT_BGRA_8888;
+
+    std::string mName;
 
     std::mutex mSurfaceMutex;
     std::unique_ptr<Surface> mNativeSurface;
@@ -224,8 +228,8 @@ public:
     }
 
 private:
-    AndroidDisplaySurface mScanout;
-    AndroidDisplaySurface mCursor;
+    AndroidDisplaySurface mScanout{"scanout"};
+    AndroidDisplaySurface mCursor{"cursor"};
     ndk::ScopedFileDescriptor mCursorStream;
 };
 
@@ -309,7 +313,8 @@ extern "C" AndroidDisplaySurface* create_android_surface(struct AndroidDisplayCo
     }
 
     if (auto ret = displaySurface->configure(width, height); !ret.ok()) {
-        ctx->errorf(ret.error().message().c_str());
+        ctx->errorf("Failed to configure surface %s: %s", displaySurface->name().c_str(),
+                    ret.error().message().c_str());
     }
 
     displaySurface->waitForNativeSurface(); // this can block
@@ -339,7 +344,8 @@ extern "C" bool get_android_surface_buffer(struct AndroidDisplayContext* ctx,
 
     auto ret = surface->lock(out_buffer);
     if (!ret.ok()) {
-        ctx->errorf("Failed to lock surface: %s", ret.error().message().c_str());
+        ctx->errorf("Failed to lock surface %s: %s", surface->name().c_str(),
+                    ret.error().message().c_str());
         return false;
     }
 
@@ -370,7 +376,7 @@ extern "C" void post_android_surface_buffer(struct AndroidDisplayContext* ctx,
 
     auto ret = surface->unlockAndPost();
     if (!ret.ok()) {
-        ctx->errorf("Failed to unlock and post AndroidDisplaySurface: %s",
+        ctx->errorf("Failed to unlock and post for surface %s: %s", surface->name().c_str(),
                     ret.error().message().c_str());
     }
     return;
