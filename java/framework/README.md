@@ -1,7 +1,7 @@
 # Android Virtualization Framework API
 
 These Java APIs allow an app to configure and run a Virtual Machine running
-[Microdroid](../microdroid/README.md) and execute native code from the app (the
+[Microdroid](../build/microdroid/README.md) and execute native code from the app (the
 payload) within it.
 
 There is more information on AVF [here](../README.md). To see how to package the
