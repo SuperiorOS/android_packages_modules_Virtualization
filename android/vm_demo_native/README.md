@@ -8,7 +8,7 @@ This is for VMs that are part of the platform itself. Specifically, this C++ exa
 like creating and using a VM from a HAL process.
 
 For non-system-level VMs, you must use the Java APIs from an Android app. See the [Java demo
-app](../demo/README.md).
+app](../MicrodroidDemoApp/README.md).
 
 ## Building
 

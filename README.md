@@ -27,8 +27,8 @@ AVF APIs:
 * [VM Payload API](vm_payload/README.md)
 
 How-Tos:
-* [Building and running a demo app in Java](demo/README.md)
-* [Building and running a demo app in C++](demo_native/README.md)
+* [Building and running a demo app in Java](android/MicrodroidDemoApp/README.md)
+* [Building and running a demo app in C++](android/vm_demo_native/README.md)
 * [Debugging](docs/debug)
 * [Using custom VM](docs/custom_vm.md)
 * [Device assignment](docs/device_assignment.md)

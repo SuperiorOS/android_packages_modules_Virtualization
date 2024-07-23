@@ -112,9 +112,7 @@ public class MainActivity extends AppCompatActivity {
                             logView.append(line + "\n");
                             scrollLogView.fullScroll(View.FOCUS_DOWN);
                         });
-        model.getPayloadOutput()
-                .observeForever(
-                        line -> payloadView.append(line + "\n"));
+        model.getPayloadOutput().observeForever(line -> payloadView.append(line + "\n"));
     }
 
     /** Reads data from an input stream and posts it to the output data */
