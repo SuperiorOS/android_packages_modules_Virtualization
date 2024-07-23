@@ -193,11 +193,9 @@ public class VirtualMachine implements AutoCloseable {
      * @hide
      */
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef(prefix = "STATUS_", value = {
-            STATUS_STOPPED,
-            STATUS_RUNNING,
-            STATUS_DELETED
-    })
+    @IntDef(
+            prefix = "STATUS_",
+            value = {STATUS_STOPPED, STATUS_RUNNING, STATUS_DELETED})
     public @interface Status {}
 
     /** The virtual machine has just been created, or {@link #stop} was called on it. */
@@ -245,9 +243,7 @@ public class VirtualMachine implements AutoCloseable {
     /** Name of this VM within the package. The name should be unique in the package. */
     @NonNull private final String mName;
 
-    /**
-     * Path to the directory containing all the files related to this VM.
-     */
+    /** Path to the directory containing all the files related to this VM. */
     @NonNull private final File mVmRootPath;
 
     /**
@@ -691,8 +687,7 @@ public class VirtualMachine implements AutoCloseable {
             try {
                 byte[] instanceId = Files.readAllBytes(mInstanceIdPath.toPath());
                 service.claimVmInstance(instanceId);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new VirtualMachineException("failed to read instance_id", e);
             } catch (RemoteException e) {
                 throw e.rethrowAsRuntimeException();
@@ -1773,7 +1768,6 @@ public class VirtualMachine implements AutoCloseable {
         }
     }
 
-
     /**
      * Returns the stream object representing the log output from the virtual machine. The log
      * output is only available if the VirtualMachineConfig specifies that it should be {@linkplain
@@ -1907,22 +1901,26 @@ public class VirtualMachine implements AutoCloseable {
     private static void deleteRecursively(File dir) throws IOException {
         // Note: This doesn't follow symlinks, which is important. Instead they are just deleted
         // (and Files.delete deletes the link not the target).
-        Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
+        Files.walkFileTree(
+                dir.toPath(),
+                new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                            throws IOException {
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
+                    }
 
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                // Directory is deleted after we've visited (deleted) all its contents, so it
-                // should be empty by now.
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException e)
+                            throws IOException {
+                        // Directory is deleted after we've visited (deleted) all its contents, so
+                        // it
+                        // should be empty by now.
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
     }
 
     /**
@@ -2110,21 +2108,14 @@ public class VirtualMachine implements AutoCloseable {
         String payloadBinaryName = config.getPayloadBinaryName();
 
         StringBuilder result = new StringBuilder();
-        result.append("VirtualMachine(")
-                .append("name:")
-                .append(getName())
-                .append(", ");
+        result.append("VirtualMachine(").append("name:").append(getName()).append(", ");
         if (payloadBinaryName != null) {
             result.append("payload:").append(payloadBinaryName).append(", ");
         }
         if (payloadConfigPath != null) {
-            result.append("config:")
-                    .append(payloadConfigPath)
-                    .append(", ");
+            result.append("config:").append(payloadConfigPath).append(", ");
         }
-        result.append("package: ")
-                .append(mPackageName)
-                .append(")");
+        result.append("package: ").append(mPackageName).append(")");
         return result.toString();
     }
 
@@ -2232,7 +2223,7 @@ public class VirtualMachine implements AutoCloseable {
             throws VirtualMachineException {
         try (FileChannel idOutput = new FileOutputStream(mInstanceIdPath).getChannel();
                 FileChannel idInput = new AutoCloseInputStream(instanceIdFd).getChannel()) {
-            idOutput.transferFrom(idInput, /*position=*/ 0, idInput.size());
+            idOutput.transferFrom(idInput, /* position= */ 0, idInput.size());
         } catch (IOException e) {
             throw new VirtualMachineException("failed to copy instance_id", e);
         }
@@ -2242,7 +2233,7 @@ public class VirtualMachine implements AutoCloseable {
             throws VirtualMachineException {
         try (FileChannel instance = new FileOutputStream(mInstanceFilePath).getChannel();
                 FileChannel instanceInput = new AutoCloseInputStream(instanceFd).getChannel()) {
-            instance.transferFrom(instanceInput, /*position=*/ 0, instanceInput.size());
+            instance.transferFrom(instanceInput, /* position= */ 0, instanceInput.size());
         } catch (IOException e) {
             throw new VirtualMachineException("failed to transfer instance image", e);
         }
@@ -2252,7 +2243,7 @@ public class VirtualMachine implements AutoCloseable {
             throws VirtualMachineException {
         try (FileChannel storeOutput = new FileOutputStream(mEncryptedStoreFilePath).getChannel();
                 FileChannel storeInput = new AutoCloseInputStream(encryptedStoreFd).getChannel()) {
-            storeOutput.transferFrom(storeInput, /*position=*/ 0, storeInput.size());
+            storeOutput.transferFrom(storeInput, /* position= */ 0, storeInput.size());
         } catch (IOException e) {
             throw new VirtualMachineException("failed to transfer encryptedstore image", e);
         }

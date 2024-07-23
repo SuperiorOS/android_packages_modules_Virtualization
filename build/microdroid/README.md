@@ -132,7 +132,7 @@ Stopping the VM can be done by pressing `Ctrl+C`.
 ### Using the APIs
 
 Use the [Android Virtualization Framework Java
-APIs](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/java/framework/README.md)
+APIs](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/libs/framework-virtualization/README.md)
 in your app to create a microdroid VM and run payload in it. The APIs are currently
 @SystemApi, and only available to preinstalled apps.
 
