@@ -81,7 +81,7 @@
   ],
   "imports": [
     {
-      "path": "packages/modules/Virtualization/apkdmverity"
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
     },
     {
       "path": "packages/modules/Virtualization/encryptedstore"
