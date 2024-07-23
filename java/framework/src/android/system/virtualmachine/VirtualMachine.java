@@ -132,7 +132,7 @@ import java.util.zip.ZipFile;
  * #connectToVsockServer} or {@link #connectVsock}.
  *
  * <p>The payload code running inside the VM has access to a set of native APIs; see the <a
- * href="https://cs.android.com/android/platform/superproject/+/master:packages/modules/Virtualization/vm_payload/README.md">README
+ * href="https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/Virtualization/libs/libvm_payload/README.md">README
  * file</a> for details.
  *
  * <p>Each VM has a unique secret, computed from the APK that contains the code running in it, the
