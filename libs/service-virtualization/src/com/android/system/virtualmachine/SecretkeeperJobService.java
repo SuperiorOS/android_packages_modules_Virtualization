@@ -95,7 +95,7 @@ public class SecretkeeperJobService extends JobService {
                 }
                 sJob.set(null);
                 // We don't reschedule on error, we will try again the next day anyway.
-                jobFinished(params, /*wantReschedule=*/ false);
+                jobFinished(params, /* wantReschedule= */ false);
             }
         }.start();
 
