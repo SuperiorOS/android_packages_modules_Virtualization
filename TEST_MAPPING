@@ -120,7 +120,7 @@
       "path": "packages/modules/Virtualization/authfs"
     },
     {
-      "path": "packages/modules/Virtualization/microdroid_manager"
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
     },
     {
       "path": "packages/modules/Virtualization/pvmfw"
