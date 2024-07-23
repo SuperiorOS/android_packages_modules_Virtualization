@@ -2171,7 +2171,7 @@ public class VirtualMachine implements AutoCloseable {
     private static List<String> parseExtraApkListFromPayloadConfig(JsonReader reader)
             throws VirtualMachineException {
         /*
-         * JSON schema from packages/modules/Virtualization/microdroid/payload/config/src/lib.rs:
+         * JSON schema from packages/modules/Virtualization/microdroid/libs/libmicrodroid_payload_metadata/config/src/lib.rs:
          *
          * <p>{ "extra_apks": [ { "path": "/system/app/foo.apk", }, ... ], ... }
          */

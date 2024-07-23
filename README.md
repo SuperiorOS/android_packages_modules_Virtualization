@@ -18,7 +18,7 @@ AVF components:
 * [Android Boot Loader (ABL)](docs/abl.md)
 * [Microdroid](microdroid/README.md)
 * [Microdroid kernel](microdroid/kernel/README.md)
-* [Microdroid payload](microdroid/payload/README.md)
+* [Microdroid payload](libs/libmicrodroid_payload_metadata/README.md)
 * [vmbase](vmbase/README.md)
 * [Encrypted Storage](guest/encryptedstore/README.md)
 
