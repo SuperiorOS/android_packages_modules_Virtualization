@@ -16,6 +16,7 @@
 
 #include <aidl/android/crosvm/BnCrosvmAndroidDisplayService.h>
 #include <aidl/android/system/virtualizationservice_internal/IVirtualizationServiceInternal.h>
+#include <android-base/result.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <system/graphics.h> // for HAL_PIXEL_FORMAT_*
@@ -28,6 +29,9 @@ using aidl::android::crosvm::BnCrosvmAndroidDisplayService;
 using aidl::android::system::virtualizationservice_internal::IVirtualizationServiceInternal;
 using aidl::android::view::Surface;
 
+using android::base::Error;
+using android::base::Result;
+
 namespace {
 
 class SinkANativeWindow_Buffer {
@@ -35,9 +39,9 @@ public:
     SinkANativeWindow_Buffer() = default;
     virtual ~SinkANativeWindow_Buffer() = default;
 
-    bool configure(uint32_t width, uint32_t height, int format) {
+    Result<void> configure(uint32_t width, uint32_t height, int format) {
         if (format != HAL_PIXEL_FORMAT_BGRA_8888) {
-            return false;
+            return Error() << "Pixel format " << format << " is not BGRA_8888.";
         }
 
         mBufferBits.resize(width * height * 4);
@@ -48,7 +52,7 @@ public:
                 .format = format,
                 .bits = mBufferBits.data(),
         };
-        return true;
+        return {};
     }
 
     operator ANativeWindow_Buffer&() { return mBuffer; }
@@ -90,7 +94,7 @@ public:
         return mNativeSurface.get();
     }
 
-    void configure(uint32_t width, uint32_t height) {
+    Result<void> configure(uint32_t width, uint32_t height) {
         std::unique_lock lk(mSurfaceMutex);
 
         mRequestedSurfaceDimensions = Rect{
@@ -98,7 +102,11 @@ public:
                 .height = height,
         };
 
-        mSinkBuffer.configure(width, height, kFormat);
+        auto ret = mSinkBuffer.configure(width, height, kFormat);
+        if (!ret.ok()) {
+            return Error() << "Failed to configure sink buffer: " << ret.error();
+        }
+        return ret;
     }
 
     void waitForNativeSurface() {
@@ -106,7 +114,7 @@ public:
         mNativeSurfaceReady.wait(lk, [this] { return mNativeSurface != nullptr; });
     }
 
-    int lock(ANativeWindow_Buffer* out_buffer) {
+    Result<void> lock(ANativeWindow_Buffer* out_buffer) {
         std::unique_lock lk(mSurfaceMutex);
 
         Surface* surface = mNativeSurface.get();
@@ -114,47 +122,53 @@ public:
             // Surface not currently available but not necessarily an error
             // if, for example, the VmLauncherApp is not in the foreground.
             *out_buffer = mSinkBuffer;
-            return 0;
+            return {};
         }
 
         ANativeWindow* anw = surface->get();
         if (anw == nullptr) {
-            return -1;
+            return Error() << "Failed to get ANativeWindow";
         }
 
         if (mNativeSurfaceNeedsConfiguring) {
             if (!mRequestedSurfaceDimensions) {
-                return -1;
+                return Error() << "Surface dimension is not configured yet!";
             }
             const auto& dims = *mRequestedSurfaceDimensions;
 
             // Ensure locked buffers have our desired format.
             if (ANativeWindow_setBuffersGeometry(anw, dims.width, dims.height, kFormat) != 0) {
-                return -1;
+                return Error() << "Failed to set buffer geometry.";
             }
 
             mNativeSurfaceNeedsConfiguring = false;
         }
 
-        return ANativeWindow_lock(anw, out_buffer, nullptr);
+        if (ANativeWindow_lock(anw, out_buffer, nullptr) != 0) {
+            return Error() << "Failed to lock window";
+        }
+        return {};
     }
 
-    int unlockAndPost() {
+    Result<void> unlockAndPost() {
         std::unique_lock lk(mSurfaceMutex);
 
         Surface* surface = mNativeSurface.get();
         if (surface == nullptr) {
             // Surface not currently available but not necessarily an error
             // if, for example, the VmLauncherApp is not in the foreground.
-            return 0;
+            return {};
         }
 
         ANativeWindow* anw = surface->get();
         if (anw == nullptr) {
-            return -1;
+            return Error() << "Failed to get ANativeWindow";
         }
 
-        return ANativeWindow_unlockAndPost(anw);
+        if (ANativeWindow_unlockAndPost(anw) != 0) {
+            return Error() << "Failed to unlock and post window";
+        }
+        return {};
     }
 
 private:
@@ -294,7 +308,9 @@ extern "C" AndroidDisplaySurface* create_android_surface(struct AndroidDisplayCo
         return nullptr;
     }
 
-    displaySurface->configure(width, height);
+    if (auto ret = displaySurface->configure(width, height); !ret.ok()) {
+        ctx->errorf(ret.error().message().c_str());
+    }
 
     displaySurface->waitForNativeSurface(); // this can block
 
@@ -321,8 +337,9 @@ extern "C" bool get_android_surface_buffer(struct AndroidDisplayContext* ctx,
         return false;
     }
 
-    if (surface->lock(out_buffer) != 0) {
-        ctx->errorf("Failed to lock buffer");
+    auto ret = surface->lock(out_buffer);
+    if (!ret.ok()) {
+        ctx->errorf("Failed to lock surface: %s", ret.error().message().c_str());
         return false;
     }
 
@@ -351,8 +368,10 @@ extern "C" void post_android_surface_buffer(struct AndroidDisplayContext* ctx,
         return;
     }
 
-    if (surface->unlockAndPost() != 0) {
-        ctx->errorf("Failed to unlock and post AndroidDisplaySurface.");
-        return;
+    auto ret = surface->unlockAndPost();
+    if (!ret.ok()) {
+        ctx->errorf("Failed to unlock and post AndroidDisplaySurface: %s",
+                    ret.error().message().c_str());
     }
+    return;
 }
