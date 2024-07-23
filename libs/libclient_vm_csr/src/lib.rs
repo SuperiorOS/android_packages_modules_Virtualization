@@ -36,7 +36,7 @@ use zeroize::Zeroizing;
 
 /// Key parameters for the attestation key.
 ///
-/// See service_vm/comm/client_vm_csr.cddl for more information about the attestation key.
+/// See libs/libservice_vm_comm/client_vm_csr.cddl for more information about the attestation key.
 const ATTESTATION_KEY_NID: Nid = Nid::X9_62_PRIME256V1; // NIST P-256 curve
 const ATTESTATION_KEY_ALGO: iana::Algorithm = iana::Algorithm::ES256;
 const ATTESTATION_KEY_CURVE: iana::EllipticCurve = iana::EllipticCurve::P_256;

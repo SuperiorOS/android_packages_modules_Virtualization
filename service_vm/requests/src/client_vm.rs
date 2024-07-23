@@ -55,7 +55,7 @@ pub(super) fn request_attestation(
         vendor_hashtree_root_digest_from_dt,
     )?;
 
-    // AAD is empty as defined in service_vm/comm/client_vm_csr.cddl.
+    // AAD is empty as defined in libs/libservice_vm_comm/client_vm_csr.cddl.
     let aad = &[];
 
     // Verifies the first signature with the leaf private key in the DICE chain.
