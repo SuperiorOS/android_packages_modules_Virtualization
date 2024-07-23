@@ -17,7 +17,7 @@
 # TODO: Remove this once the APEX is included in base system.
 
 # To include the APEX in your build, insert this in your device.mk:
-#   $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
+#   $(call inherit-product, packages/modules/Virtualization/build/apex/product_packages.mk)
 
 # If devices supports AVF it implies that it uses non-flattened APEXes.
 $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
