@@ -137,7 +137,7 @@ in your app to create a microdroid VM and run payload in it. The APIs are curren
 @SystemApi, and only available to preinstalled apps.
 
 If you are looking for an example usage of the APIs, you may refer to the [demo
-app](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/demo/).
+app](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/android/MicrodroidDemoApp/).
 
 
 ## Running Microdroid with vendor image
