@@ -16,26 +16,28 @@
 
 package com.android.virt.vm_attestation.testapp;
 
+import static android.system.virtualmachine.VirtualMachineConfig.DEBUG_LEVEL_FULL;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
-import static android.system.virtualmachine.VirtualMachineConfig.DEBUG_LEVEL_FULL;
 
 import android.system.virtualmachine.VirtualMachine;
 import android.system.virtualmachine.VirtualMachineConfig;
 import android.system.virtualmachine.VirtualMachineManager;
+
+import com.android.microdroid.test.device.MicrodroidDeviceTestBase;
+import com.android.virt.vm_attestation.testservice.IAttestationService;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import com.android.microdroid.test.device.MicrodroidDeviceTestBase;
-import com.android.virt.vm_attestation.testservice.IAttestationService;
 
 @RunWith(Parameterized.class)
 public class VmAttestationTests extends MicrodroidDeviceTestBase {
