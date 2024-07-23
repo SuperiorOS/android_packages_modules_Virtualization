@@ -89,10 +89,10 @@ public class VirtualMachineManager {
      * @hide
      */
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef(prefix = "CAPABILITY_", flag = true, value = {
-            CAPABILITY_PROTECTED_VM,
-            CAPABILITY_NON_PROTECTED_VM
-    })
+    @IntDef(
+            prefix = "CAPABILITY_",
+            flag = true,
+            value = {CAPABILITY_PROTECTED_VM, CAPABILITY_NON_PROTECTED_VM})
     public @interface Capability {}
 
     /**

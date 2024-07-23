@@ -105,10 +105,9 @@ public final class VirtualMachineConfig {
 
     /** @hide */
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef(prefix = "DEBUG_LEVEL_", value = {
-            DEBUG_LEVEL_NONE,
-            DEBUG_LEVEL_FULL
-    })
+    @IntDef(
+            prefix = "DEBUG_LEVEL_",
+            value = {DEBUG_LEVEL_NONE, DEBUG_LEVEL_FULL})
     public @interface DebugLevel {}
 
     /**
@@ -164,9 +163,7 @@ public final class VirtualMachineConfig {
 
     @DebugLevel private final int mDebugLevel;
 
-    /**
-     * Whether to run the VM in protected mode, so the host can't access its memory.
-     */
+    /** Whether to run the VM in protected mode, so the host can't access its memory. */
     private final boolean mProtectedVm;
 
     /**
@@ -181,9 +178,7 @@ public final class VirtualMachineConfig {
     /** The serial device for VM console input. */
     @Nullable private final String mConsoleInputDevice;
 
-    /**
-     * Path within the APK to the payload config file that defines software aspects of the VM.
-     */
+    /** Path within the APK to the payload config file that defines software aspects of the VM. */
     @Nullable private final String mPayloadConfigPath;
 
     /** Name of the payload binary file within the APK that will be executed within the VM. */
@@ -754,11 +749,9 @@ public final class VirtualMachineConfig {
             VirtualMachinePayloadConfig payloadConfig = new VirtualMachinePayloadConfig();
             payloadConfig.payloadBinaryName = mPayloadBinaryName;
             payloadConfig.extraApks = Collections.emptyList();
-            vsConfig.payload =
-                    VirtualMachineAppConfig.Payload.payloadConfig(payloadConfig);
+            vsConfig.payload = VirtualMachineAppConfig.Payload.payloadConfig(payloadConfig);
         } else {
-            vsConfig.payload =
-                    VirtualMachineAppConfig.Payload.configPath(mPayloadConfigPath);
+            vsConfig.payload = VirtualMachineAppConfig.Payload.configPath(mPayloadConfigPath);
         }
         vsConfig.osName = mOs;
         switch (mDebugLevel) {

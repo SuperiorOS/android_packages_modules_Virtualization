@@ -23,7 +23,7 @@ AVF components:
 * [Encrypted Storage](guest/encryptedstore/README.md)
 
 AVF APIs:
-* [Java API](java/framework/README.md)
+* [Java API](libs/framework-virtualization/README.md)
 * [VM Payload API](libs/libvm_payload/README.md)
 
 How-Tos:

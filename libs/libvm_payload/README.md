@@ -9,7 +9,7 @@ Note that only native code is supported in Microdroid, so no Java APIs are
 available in the VM, and only 64 bit code is supported.
 
 To create a VM and run the payload from Android see the [AVF Java
-APIs](../java/framework/README.md).
+APIs](../libs/framework-virtualization/README.md).
 
 ## Entry point
 
@@ -17,7 +17,7 @@ The payload should be packaged as one (or more) .so files inside the app's APK -
 under the `lib/<ABI>` directory, like other JNI code.
 
 The primary .so, which is specified as part of the VM configuration via
-[VirtualMachineConfig.Builder#setPayloadBinaryPath](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/java/framework/src/android/system/virtualmachine/VirtualMachineConfig.java),
+[VirtualMachineConfig.Builder#setPayloadBinaryPath](https://android.googlesource.com/platform/packages/modules/Virtualization/+/refs/heads/main/libs/framework-virtualization/src/android/system/virtualmachine/VirtualMachineConfig.java),
 must define the entry point for the payload.
 
 This entry point is a C function called `AVmPayload_main()`, as declared in
