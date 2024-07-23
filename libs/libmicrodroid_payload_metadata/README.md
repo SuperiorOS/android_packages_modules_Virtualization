@@ -3,7 +3,7 @@
 Payload disk is a composite disk image referencing host APEXes and an APK so that microdroid
 mounts/activates APK/APEXes and executes a binary within the APK.
 
-Payload disk is created by [VirtualizationService](../../virtualizationservice) Service when
+Payload disk is created by [VirtualizationService](../../android/virtualizationservice) Service when
 starting a VM.
 
 ## Partitions

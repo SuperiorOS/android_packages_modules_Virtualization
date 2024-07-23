@@ -138,7 +138,7 @@
       "path": "packages/modules/Virtualization/service_vm/requests"
     },
     {
-      "path": "packages/modules/Virtualization/virtualizationservice"
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
     },
     {
       "path": "packages/modules/Virtualization/vm"
