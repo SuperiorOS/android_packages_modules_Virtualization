@@ -26,6 +26,6 @@ With [Updatable VM feature][updatable_vm] shipping in Android V, Encrypted Stora
 even after OTA/updates of boot images and apks. This requires chipsets to support [Secretkeeper HAL][sk_hal].
 
 
-[vm_payload_api]: https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/Virtualization/vm_payload/include/vm_payload.h;l=2?q=vm_payload%2Finclude%2Fvm_payload.h&ss=android%2Fplatform%2Fsuperproject%2Fmain
+[vm_payload_api]: https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/Virtualization/libs/libvm_payload/include/vm_payload.h;l=2?q=vm_payload%2Finclude%2Fvm_payload.h&ss=android%2Fplatform%2Fsuperproject%2Fmain
 [updatable_vm]: https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/Virtualization/docs/updatable_vm.md
 [sk_hal]: https://cs.android.com/android/platform/superproject/main/+/main:system/secretkeeper/README.md

@@ -14,4 +14,4 @@ To update this file, something like the following should work:
 lunch aosp_arm64-eng
 m MicrodroidTestNativeLib
 
-The generated stub file can then be found at out/soong/.intermediates/packages/modules/Virtualization/vm_payload/libvm_payload/android_arm64_armv8-a_shared_current/gen/stub.c
+The generated stub file can then be found at out/soong/.intermediates/packages/modules/Virtualization/libs/libvm_payload/libvm_payload/android_arm64_armv8-a_shared_current/gen/stub.c
