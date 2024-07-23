@@ -47,6 +47,7 @@ java_sdk_library {
         "avf_aconfig_flags",
     ],
     lint: {
+        baseline_filename: "lint-baseline.xml",
         warning_checks: [
             "FlaggedApi",
         ],
