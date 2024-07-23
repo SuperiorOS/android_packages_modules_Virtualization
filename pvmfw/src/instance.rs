@@ -237,7 +237,7 @@ fn locate_entry(partition: &mut Partition) -> Result<PvmfwEntry> {
 
 /// Marks the start of an instance.img entry.
 ///
-/// Note: Virtualization/microdroid_manager/src/instance.rs uses the name "partition".
+/// Note: Virtualization/guest/microdroid_manager/src/instance.rs uses the name "partition".
 #[derive(AsBytes, FromZeroes, FromBytes)]
 #[repr(C, packed)]
 struct EntryHeader {
