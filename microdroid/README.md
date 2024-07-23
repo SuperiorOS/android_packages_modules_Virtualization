@@ -14,7 +14,7 @@ The only remaining requirement is that `com.android.virt` APEX has to be
 pre-installed. To do this, add the following line in your product makefile.
 
 ```make
-$(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
+$(call inherit-product, packages/modules/Virtualization/build/apex/product_packages.mk)
 ```
 
 Build the target product after adding the line, and flash it. This step needs
