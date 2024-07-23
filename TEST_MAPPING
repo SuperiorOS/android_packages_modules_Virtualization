@@ -87,7 +87,7 @@
       "path": "packages/modules/Virtualization/guest/encryptedstore"
     },
     {
-      "path": "packages/modules/Virtualization/virtualizationmanager"
+      "path": "packages/modules/Virtualization/android/virtmgr"
     },
     {
       "path": "packages/modules/Virtualization/libs/apexutil"
