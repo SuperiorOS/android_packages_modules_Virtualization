@@ -36,9 +36,6 @@ namespace {
 
 class SinkANativeWindow_Buffer {
 public:
-    SinkANativeWindow_Buffer() = default;
-    virtual ~SinkANativeWindow_Buffer() = default;
-
     Result<void> configure(uint32_t width, uint32_t height, int format) {
         if (format != HAL_PIXEL_FORMAT_BGRA_8888) {
             return Error() << "Pixel format " << format << " is not BGRA_8888.";
@@ -62,14 +59,12 @@ private:
     std::vector<uint8_t> mBufferBits;
 };
 
-// Wrapper which contains the latest available Surface/ANativeWindow
-// from the DisplayService, if available. A Surface/ANativeWindow may
-// not always be available if, for example, the VmLauncherApp on the
-// other end of the DisplayService is not in the foreground / is paused.
+// Wrapper which contains the latest available Surface/ANativeWindow from the DisplayService, if
+// available. A Surface/ANativeWindow may not always be available if, for example, the VmLauncherApp
+// on the other end of the DisplayService is not in the foreground / is paused.
 class AndroidDisplaySurface {
 public:
     AndroidDisplaySurface(const std::string& name) : mName(name) {}
-    virtual ~AndroidDisplaySurface() = default;
 
     void setSurface(Surface* surface) {
         {
@@ -201,30 +196,27 @@ public:
     virtual ~DisplayService() = default;
 
     ndk::ScopedAStatus setSurface(Surface* surface, bool forCursor) override {
-        if (forCursor) {
-            mCursor.setSurface(surface);
-        } else {
-            mScanout.setSurface(surface);
-        }
+        getSurface(forCursor).setSurface(surface);
         return ::ndk::ScopedAStatus::ok();
     }
 
     ndk::ScopedAStatus removeSurface(bool forCursor) override {
-        if (forCursor) {
-            mCursor.removeSurface();
-        } else {
-            mScanout.removeSurface();
-        }
+        getSurface(forCursor).removeSurface();
         return ::ndk::ScopedAStatus::ok();
     }
-
-    AndroidDisplaySurface* getCursorSurface() { return &mCursor; }
-    AndroidDisplaySurface* getScanoutSurface() { return &mScanout; }
 
     ndk::ScopedFileDescriptor& getCursorStream() { return mCursorStream; }
     ndk::ScopedAStatus setCursorStream(const ndk::ScopedFileDescriptor& in_stream) {
         mCursorStream = ndk::ScopedFileDescriptor(dup(in_stream.get()));
         return ::ndk::ScopedAStatus::ok();
+    }
+
+    AndroidDisplaySurface& getSurface(bool forCursor) {
+        if (forCursor) {
+            return mCursor;
+        } else {
+            return mScanout;
+        }
     }
 
 private:
@@ -305,24 +297,18 @@ extern "C" AndroidDisplaySurface* create_android_surface(struct AndroidDisplayCo
         return nullptr;
     }
 
-    AndroidDisplaySurface* displaySurface = forCursor ? ctx->disp_service->getCursorSurface()
-                                                      : ctx->disp_service->getScanoutSurface();
-    if (displaySurface == nullptr) {
-        ctx->errorf("AndroidDisplaySurface was not created");
-        return nullptr;
-    }
-
-    if (auto ret = displaySurface->configure(width, height); !ret.ok()) {
-        ctx->errorf("Failed to configure surface %s: %s", displaySurface->name().c_str(),
+    AndroidDisplaySurface& surface = ctx->disp_service->getSurface(forCursor);
+    if (auto ret = surface.configure(width, height); !ret.ok()) {
+        ctx->errorf("Failed to configure surface %s: %s", surface.name().c_str(),
                     ret.error().message().c_str());
     }
 
-    displaySurface->waitForNativeSurface(); // this can block
+    surface.waitForNativeSurface(); // this can block
 
     // TODO(b/332785161): if we know that surface can get destroyed dynamically while VM is running,
     // consider calling ANativeWindow_acquire here and _release in destroy_android_surface, so that
     // crosvm doesn't hold a dangling pointer.
-    return displaySurface;
+    return &surface;
 }
 
 extern "C" void destroy_android_surface(struct AndroidDisplayContext*, ANativeWindow*) {
