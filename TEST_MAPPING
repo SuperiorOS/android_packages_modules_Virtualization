@@ -84,7 +84,7 @@
       "path": "packages/modules/Virtualization/guest/apkdmverity"
     },
     {
-      "path": "packages/modules/Virtualization/encryptedstore"
+      "path": "packages/modules/Virtualization/guest/encryptedstore"
     },
     {
       "path": "packages/modules/Virtualization/virtualizationmanager"
