@@ -144,7 +144,7 @@
       "path": "packages/modules/Virtualization/android/vm"
     },
     {
-      "path": "packages/modules/Virtualization/vmbase"
+      "path": "packages/modules/Virtualization/libs/libvmbase"
     },
     {
       "path": "packages/modules/Virtualization/guest/zipfuse"
