@@ -20,17 +20,17 @@ import static android.system.virtualmachine.VirtualMachineConfig.DEBUG_LEVEL_FUL
 
 import static com.google.common.truth.TruthJUnit.assume;
 
-import android.net.ConnectivityManager;
-import android.net.NetworkCapabilities;
-import android.net.Network;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.system.virtualmachine.VirtualMachine;
 import android.system.virtualmachine.VirtualMachineConfig;
+import android.system.virtualmachine.VirtualMachineManager;
 
 import com.android.microdroid.test.device.MicrodroidDeviceTestBase;
 import com.android.virt.vm_attestation.testservice.IAttestationService.SigningResult;
 import com.android.virt.vm_attestation.util.X509Utils;
-import android.system.virtualmachine.VirtualMachineManager;
 
 import org.junit.Before;
 import org.junit.Test;
