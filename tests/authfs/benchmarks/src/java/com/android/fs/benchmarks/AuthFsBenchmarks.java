@@ -18,7 +18,6 @@ package com.android.virt.fs.benchmarks;
 
 import static com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestMetrics;
 
-
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
