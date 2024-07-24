@@ -75,8 +75,8 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
         AuthFsTestRule.setUpAndroid(testInfo);
-        assumeTrue(AuthFsTestRule.getDevice().supportsMicrodroid(/*protectedVm=*/ true));
-        AuthFsTestRule.startMicrodroid(/*protectedVm=*/ true);
+        assumeTrue(AuthFsTestRule.getDevice().supportsMicrodroid(/* protectedVm= */ true));
+        AuthFsTestRule.startMicrodroid(/* protectedVm= */ true);
         sAndroid = AuthFsTestRule.getAndroid();
         sMicrodroid = AuthFsTestRule.getMicrodroid();
     }
@@ -114,7 +114,7 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         // Setup
         runFdServerOnAndroid(
                 "--open-ro 3:input.4k --open-ro 4:input.4k.fsv_meta --open-ro"
-                    + " 6:input.4k1 --open-ro 7:input.4k1.fsv_meta",
+                        + " 6:input.4k1 --open-ro 7:input.4k1.fsv_meta",
                 "--ro-fds 3:4 --ro-fds 6:7");
         runAuthFsOnMicrodroid(
                 "--remote-ro-file 3:" + DIGEST_4K + " --remote-ro-file 6:" + DIGEST_4K1);
@@ -135,8 +135,7 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
     public void testReadWithFsverityVerification_TamperedMerkleTree() throws Exception {
         // Setup
         runFdServerOnAndroid(
-                "--open-ro 3:input.4m --open-ro 4:input.4m.fsv_meta.bad_merkle",
-                "--ro-fds 3:4");
+                "--open-ro 3:input.4m --open-ro 4:input.4m.fsv_meta.bad_merkle", "--ro-fds 3:4");
         runAuthFsOnMicrodroid("--remote-ro-file 3:" + DIGEST_4M);
 
         // Verify
@@ -190,8 +189,12 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         // Action
         // Tampering with the first 2 4K-blocks of the backing file.
         assertThat(
-                writeZerosAtFileOffset(sAndroid, backendPath,
-                        /* offset */ 0, /* number */ 8192, /* writeThrough */ false))
+                        writeZerosAtFileOffset(
+                                sAndroid,
+                                backendPath,
+                                /* offset */ 0, /* number */
+                                8192, /* writeThrough */
+                                false))
                 .isSuccess();
 
         // Verify
@@ -199,21 +202,33 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         // when the content is inconsistent to the known hash. Use direct I/O to avoid simply
         // writing to the filesystem cache.
         assertThat(
-                writeZerosAtFileOffset(sMicrodroid, destPath,
-                        /* offset */ 0, /* number */ 1024, /* writeThrough */ true))
+                        writeZerosAtFileOffset(
+                                sMicrodroid,
+                                destPath,
+                                /* offset */ 0, /* number */
+                                1024, /* writeThrough */
+                                true))
                 .isFailed();
 
         // A full 4K write does not require to read back, so write can succeed even if the backing
         // block has already been tampered.
         assertThat(
-                writeZerosAtFileOffset(sMicrodroid, destPath,
-                        /* offset */ 4096, /* number */ 4096, /* writeThrough */ false))
+                        writeZerosAtFileOffset(
+                                sMicrodroid,
+                                destPath,
+                                /* offset */ 4096, /* number */
+                                4096, /* writeThrough */
+                                false))
                 .isSuccess();
 
         // Otherwise, a partial write with correct backing file should still succeed.
         assertThat(
-                writeZerosAtFileOffset(sMicrodroid, destPath,
-                        /* offset */ 8192, /* number */ 1024, /* writeThrough */ false))
+                        writeZerosAtFileOffset(
+                                sMicrodroid,
+                                destPath,
+                                /* offset */ 8192, /* number */
+                                1024, /* writeThrough */
+                                false))
                 .isSuccess();
     }
 
@@ -231,8 +246,12 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         // Action
         // Tampering with the first 4K-block of the backing file.
         assertThat(
-                writeZerosAtFileOffset(sAndroid, backendPath,
-                        /* offset */ 0, /* number */ 4096, /* writeThrough */ false))
+                        writeZerosAtFileOffset(
+                                sAndroid,
+                                backendPath,
+                                /* offset */ 0, /* number */
+                                4096, /* writeThrough */
+                                false))
                 .isSuccess();
 
         // Verify
@@ -258,8 +277,12 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         // Action
         // Tampering with the last 4K-block of the backing file.
         assertThat(
-                writeZerosAtFileOffset(sAndroid, backendPath,
-                        /* offset */ 4096, /* number */ 1, /* writeThrough */ false))
+                        writeZerosAtFileOffset(
+                                sAndroid,
+                                backendPath,
+                                /* offset */ 4096, /* number */
+                                1, /* writeThrough */
+                                false))
                 .isSuccess();
 
         // Verify
@@ -470,15 +493,22 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         sAndroid.run("test -f " + androidOutputPath);
 
         // Action
-        String output = sMicrodroid.run(
-                // Open the file for append and read
-                "exec 4>>" + outputPath + " 5<" + outputPath + "; "
-                // Delete the file from the directory
-                + "rm " + outputPath + "; "
-                // Append more data to the file descriptor
-                + "echo -n 456 >&4; "
-                // Print the whole file from the file descriptor
-                + "cat <&5");
+        String output =
+                sMicrodroid.run(
+                        // Open the file for append and read
+                        "exec 4>>"
+                                + outputPath
+                                + " 5<"
+                                + outputPath
+                                + "; "
+                                // Delete the file from the directory
+                                + "rm "
+                                + outputPath
+                                + "; "
+                                // Append more data to the file descriptor
+                                + "echo -n 456 >&4; "
+                                // Print the whole file from the file descriptor
+                                + "cat <&5");
 
         // Verify
         // Output contains all written data, while the files are deleted.
@@ -531,27 +561,33 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
 
         // Verify
         String[] actual = sMicrodroid.run("cd " + authfsOutputDir + "; find |sort").split("\n");
-        String[] expected = new String[] {
-                ".",
-                "./dir",
-                "./dir/dir2",
-                "./dir/dir2/dir3",
-                "./dir/dir2/dir3/file1",
-                "./dir/dir2/dir3/file2",
-                "./dir/dir2/dir3/file3",
-                "./file"};
+        String[] expected =
+                new String[] {
+                    ".",
+                    "./dir",
+                    "./dir/dir2",
+                    "./dir/dir2/dir3",
+                    "./dir/dir2/dir3/file1",
+                    "./dir/dir2/dir3/file2",
+                    "./dir/dir2/dir3/file3",
+                    "./file"
+                };
         assertEquals(expected, actual);
 
         // Add more entries.
         sMicrodroid.run("mkdir -p " + authfsOutputDir + "/dir2");
         sMicrodroid.run("touch " + authfsOutputDir + "/file2");
         // Check new entries. Also check that the types are correct.
-        actual = sMicrodroid.run(
-                "cd " + authfsOutputDir + "; find -maxdepth 1 -type f |sort").split("\n");
+        actual =
+                sMicrodroid
+                        .run("cd " + authfsOutputDir + "; find -maxdepth 1 -type f |sort")
+                        .split("\n");
         expected = new String[] {"./file", "./file2"};
         assertEquals(expected, actual);
-        actual = sMicrodroid.run(
-                "cd " + authfsOutputDir + "; find -maxdepth 1 -type d |sort").split("\n");
+        actual =
+                sMicrodroid
+                        .run("cd " + authfsOutputDir + "; find -maxdepth 1 -type d |sort")
+                        .split("\n");
         expected = new String[] {".", "./dir", "./dir2"};
         assertEquals(expected, actual);
     }
@@ -687,8 +723,9 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
                 "yes $'\\x01' | tr -d '\\n' | dd bs=1 count=" + numberOfOnes + " of=" + filePath);
     }
 
-    private static CommandResult checkReadAt(CommandRunner runner, String filePath, long offset,
-            long size) throws DeviceNotAvailableException {
+    private static CommandResult checkReadAt(
+            CommandRunner runner, String filePath, long offset, long size)
+            throws DeviceNotAvailableException {
         String cmd = "dd if=" + filePath + " of=/dev/null bs=1 count=" + size;
         if (offset > 0) {
             cmd += " skip=" + offset;
@@ -696,10 +733,15 @@ public final class AuthFsHostTest extends BaseHostJUnit4Test {
         return runner.runForResult(cmd);
     }
 
-    private CommandResult writeZerosAtFileOffset(CommandRunner runner, String filePath, long offset,
-            long numberOfZeros, boolean writeThrough) throws DeviceNotAvailableException {
-        String cmd = "dd if=/dev/zero of=" + filePath + " bs=1 count=" + numberOfZeros
-                + " conv=notrunc";
+    private CommandResult writeZerosAtFileOffset(
+            CommandRunner runner,
+            String filePath,
+            long offset,
+            long numberOfZeros,
+            boolean writeThrough)
+            throws DeviceNotAvailableException {
+        String cmd =
+                "dd if=/dev/zero of=" + filePath + " bs=1 count=" + numberOfZeros + " conv=notrunc";
         if (offset > 0) {
             cmd += " seek=" + offset;
         }

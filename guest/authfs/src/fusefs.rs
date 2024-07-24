@@ -99,9 +99,9 @@ struct InodeState {
     /// Number of `Handle`s (i.e. file descriptors) that are currently referring to the this inode.
     ///
     /// Technically, this does not matter to readonly entries, since they live forever. The
-    /// reference count is only needed for manageing lifetime of writable entries like `VerifiedNew`
-    /// and `VerifiedNewDirectory`. That is, when an entry is deleted, the actual entry needs to
-    /// stay alive until the reference count reaches zero.
+    /// reference count is only needed for manageing lifetime of writable entries like
+    /// `VerifiedNew` and `VerifiedNewDirectory`. That is, when an entry is deleted, the actual
+    /// entry needs to stay alive until the reference count reaches zero.
     ///
     /// Note: This is not to be confused with hardlinks, which AuthFS doesn't currently implement.
     handle_ref_count: AtomicU64,
@@ -192,9 +192,9 @@ pub struct AuthFs {
     /// The next available inode number.
     next_inode: AtomicU64,
 
-    /// Table for `Handle` to `Arc<DirEntriesSnapshot>` lookup. On `opendir`, a new directory handle
-    /// is created and the snapshot of the current directory is created. This is not super
-    /// efficient, but is the simplest way to be compliant to the FUSE contract (see
+    /// Table for `Handle` to `Arc<DirEntriesSnapshot>` lookup. On `opendir`, a new directory
+    /// handle is created and the snapshot of the current directory is created. This is not
+    /// super efficient, but is the simplest way to be compliant to the FUSE contract (see
     /// `fuse::filesystem::readdir`).
     ///
     /// Currently, no code locks `dir_handle_table` and `inode_table` at the same time to avoid
@@ -822,9 +822,9 @@ impl FileSystem for AuthFs {
         self.handle_inode(&inode, |config| {
             match config {
                 AuthFsEntry::VerifiedNew { editor, .. } => {
-                    // FUSE ioctl is limited, thus we can't implement fs-verity ioctls without a kernel
-                    // change (see b/196635431). Until it's possible, use xattr to expose what we need
-                    // as an authfs specific API.
+                    // FUSE ioctl is limited, thus we can't implement fs-verity ioctls without a
+                    // kernel change (see b/196635431). Until it's possible, use
+                    // xattr to expose what we need as an authfs specific API.
                     if name != CStr::from_bytes_with_nul(b"authfs.fsverity.digest\0").unwrap() {
                         return Err(io::Error::from_raw_os_error(libc::ENODATA));
                     }
