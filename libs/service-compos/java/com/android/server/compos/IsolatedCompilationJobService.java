@@ -52,14 +52,16 @@ public class IsolatedCompilationJobService extends JobService {
         ComponentName serviceName =
                 new ComponentName("android", IsolatedCompilationJobService.class.getName());
 
-        int result = scheduler.schedule(new JobInfo.Builder(STAGED_APEX_JOB_ID, serviceName)
-                // Wait in case more APEXes are staged
-                .setMinimumLatency(TimeUnit.MINUTES.toMillis(60))
-                // We consume CPU, power, and storage
-                .setRequiresDeviceIdle(true)
-                .setRequiresCharging(true)
-                .setRequiresStorageNotLow(true)
-                .build());
+        int result =
+                scheduler.schedule(
+                        new JobInfo.Builder(STAGED_APEX_JOB_ID, serviceName)
+                                // Wait in case more APEXes are staged
+                                .setMinimumLatency(TimeUnit.MINUTES.toMillis(60))
+                                // We consume CPU, power, and storage
+                                .setRequiresDeviceIdle(true)
+                                .setRequiresCharging(true)
+                                .setRequiresStorageNotLow(true)
+                                .build());
         if (result == JobScheduler.RESULT_SUCCESS) {
             IsolatedCompilationMetrics.onCompilationScheduled(
                     IsolatedCompilationMetrics.SCHEDULING_SUCCESS);
@@ -86,13 +88,14 @@ public class IsolatedCompilationJobService extends JobService {
         if (oldJob != null) {
             // We're already running a job, give up on this one
             Log.w(TAG, "Another job is in progress, skipping");
-            return false;  // Already finished
+            return false; // Already finished
         }
 
         IsolatedCompilationMetrics metrics = new IsolatedCompilationMetrics();
 
-        CompilationJob newJob = new CompilationJob(IsolatedCompilationJobService.this::onCompletion,
-                params, metrics);
+        CompilationJob newJob =
+                new CompilationJob(
+                        IsolatedCompilationJobService.this::onCompletion, params, metrics);
         mCurrentJob.set(newJob);
 
         // This can take some time - we need to start up a VM - so we do it on a separate
@@ -108,7 +111,7 @@ public class IsolatedCompilationJobService extends JobService {
                     metrics.onCompilationEnded(IsolatedCompilationMetrics.RESULT_FAILED_TO_START);
                     mCurrentJob.set(null);
                     newJob.stop(); // Just in case it managed to start before failure
-                    jobFinished(params, /*wantReschedule=*/ false);
+                    jobFinished(params, /* wantReschedule= */ false);
                 }
             }
         }.start();
@@ -137,7 +140,7 @@ public class IsolatedCompilationJobService extends JobService {
         // On success we don't need to reschedule.
         // On failure we could reschedule, but that could just use a lot of resources and still
         // fail; instead we just let odsign do compilation on reboot if necessary.
-        jobFinished(params, /*wantReschedule=*/ false);
+        jobFinished(params, /* wantReschedule= */ false);
     }
 
     interface CompilationCallback {
@@ -152,7 +155,9 @@ public class IsolatedCompilationJobService extends JobService {
         private final JobParameters mParams;
         private volatile boolean mStopRequested = false;
 
-        CompilationJob(CompilationCallback callback, JobParameters params,
+        CompilationJob(
+                CompilationCallback callback,
+                JobParameters params,
                 IsolatedCompilationMetrics metrics) {
             mCallback = requireNonNull(callback);
             mParams = params;

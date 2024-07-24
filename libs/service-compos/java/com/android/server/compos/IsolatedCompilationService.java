@@ -60,7 +60,6 @@ public class IsolatedCompilationService extends SystemService {
             return;
         }
 
-
         JobScheduler scheduler = getContext().getSystemService(JobScheduler.class);
         if (scheduler == null) {
             Log.e(TAG, "No scheduler");
@@ -92,8 +91,9 @@ public class IsolatedCompilationService extends SystemService {
         private final IPackageManagerNative mPackageNative;
 
         static void registerForStagedApexUpdates(JobScheduler scheduler) {
-            final IPackageManagerNative packageNative = IPackageManagerNative.Stub.asInterface(
-                    ServiceManager.getService("package_native"));
+            final IPackageManagerNative packageNative =
+                    IPackageManagerNative.Stub.asInterface(
+                            ServiceManager.getService("package_native"));
             if (packageNative == null) {
                 Log.e(TAG, "No IPackageManagerNative");
                 return;
@@ -110,8 +110,7 @@ public class IsolatedCompilationService extends SystemService {
             }
         }
 
-        private StagedApexObserver(JobScheduler scheduler,
-                IPackageManagerNative packageNative) {
+        private StagedApexObserver(JobScheduler scheduler, IPackageManagerNative packageNative) {
             mScheduler = scheduler;
             mPackageNative = packageNative;
         }
