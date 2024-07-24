@@ -61,10 +61,11 @@ class IsolatedCompilationMetrics {
             ArtStatsLog.ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_FAILED_TO_START;
     public static final int RESULT_JOB_CANCELED =
             ArtStatsLog.ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_JOB_CANCELED;
-    public static final int RESULT_COMPILATION_FAILED = ArtStatsLog
-            .ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_COMPILATION_FAILED;
-    public static final int RESULT_UNEXPECTED_COMPILATION_RESULT = ArtStatsLog
-            .ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_UNEXPECTED_COMPILATION_RESULT;
+    public static final int RESULT_COMPILATION_FAILED =
+            ArtStatsLog.ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_COMPILATION_FAILED;
+    public static final int RESULT_UNEXPECTED_COMPILATION_RESULT =
+            ArtStatsLog
+                    .ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_UNEXPECTED_COMPILATION_RESULT;
     public static final int RESULT_COMPOSD_DIED =
             ArtStatsLog.ISOLATED_COMPILATION_ENDED__COMPILATION_RESULT__RESULT_COMPOSD_DIED;
     public static final int RESULT_FAILED_TO_ENABLE_FSVERITY =
@@ -78,8 +79,9 @@ class IsolatedCompilationMetrics {
     // Keep this in sync with Result enum in IsolatedCompilationScheduled in
     // frameworks/proto_logging/stats/atoms.proto
 
-    public static final int SCHEDULING_RESULT_UNKNOWN = ArtStatsLog
-            .ISOLATED_COMPILATION_SCHEDULED__SCHEDULING_RESULT__SCHEDULING_RESULT_UNKNOWN;
+    public static final int SCHEDULING_RESULT_UNKNOWN =
+            ArtStatsLog
+                    .ISOLATED_COMPILATION_SCHEDULED__SCHEDULING_RESULT__SCHEDULING_RESULT_UNKNOWN;
     public static final int SCHEDULING_FAILURE =
             ArtStatsLog.ISOLATED_COMPILATION_SCHEDULED__SCHEDULING_RESULT__SCHEDULING_FAILURE;
     public static final int SCHEDULING_SUCCESS =
@@ -104,16 +106,24 @@ class IsolatedCompilationMetrics {
         statsLogPostCompilation(result, JobParameters.STOP_REASON_UNDEFINED);
     }
 
-    private void statsLogPostCompilation(@CompilationResult int result,
-                @JobParameters.StopReason int jobStopReason) {
+    private void statsLogPostCompilation(
+            @CompilationResult int result, @JobParameters.StopReason int jobStopReason) {
 
-        long compilationTime = mCompilationStartTimeMs == 0 ? -1
-                : SystemClock.elapsedRealtime() - mCompilationStartTimeMs;
+        long compilationTime =
+                mCompilationStartTimeMs == 0
+                        ? -1
+                        : SystemClock.elapsedRealtime() - mCompilationStartTimeMs;
         mCompilationStartTimeMs = 0;
 
-        ArtStatsLog.write(ArtStatsLog.ISOLATED_COMPILATION_ENDED, compilationTime,
-                result, jobStopReason);
-        Log.i(TAG, "ISOLATED_COMPILATION_ENDED: " + result + ", " + compilationTime
-                + ", " + jobStopReason);
+        ArtStatsLog.write(
+                ArtStatsLog.ISOLATED_COMPILATION_ENDED, compilationTime, result, jobStopReason);
+        Log.i(
+                TAG,
+                "ISOLATED_COMPILATION_ENDED: "
+                        + result
+                        + ", "
+                        + compilationTime
+                        + ", "
+                        + jobStopReason);
     }
 }

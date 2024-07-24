@@ -54,8 +54,7 @@ public final class ComposTestCase extends MicrodroidHostTestCaseBase {
     // Binaries used in test. (These paths are valid both in host and Microdroid.)
     private static final String ODREFRESH_BIN = "/apex/com.android.art/bin/odrefresh";
     private static final String COMPOSD_CMD_BIN = "/apex/com.android.compos/bin/composd_cmd";
-    private static final String COMPOS_VERIFY_BIN =
-            "/apex/com.android.compos/bin/compos_verify";
+    private static final String COMPOS_VERIFY_BIN = "/apex/com.android.compos/bin/compos_verify";
 
     private static final String COMPOS_APEXDATA_DIR = "/data/misc/apexdata/com.android.compos";
 
@@ -111,10 +110,13 @@ public final class ComposTestCase extends MicrodroidHostTestCaseBase {
         android.tryRun("rm", "-rf", ODREFRESH_OUTPUT_DIR);
 
         if (mBackupSystemServerCompilerFilter != null) {
-            CLog.d("Restore dalvik.vm.systemservercompilerfilter to "
-                    + mBackupSystemServerCompilerFilter);
-            getDevice().setProperty(SYSTEM_SERVER_COMPILER_FILTER_PROP_NAME,
-                    mBackupSystemServerCompilerFilter);
+            CLog.d(
+                    "Restore dalvik.vm.systemservercompilerfilter to "
+                            + mBackupSystemServerCompilerFilter);
+            getDevice()
+                    .setProperty(
+                            SYSTEM_SERVER_COMPILER_FILTER_PROP_NAME,
+                            mBackupSystemServerCompilerFilter);
         }
     }
 
@@ -143,8 +145,8 @@ public final class ComposTestCase extends MicrodroidHostTestCaseBase {
         }
 
         // Save the expected checksum for the output directory.
-        String expectedChecksumSnapshot = checksumDirectoryContentPartial(android,
-                ODREFRESH_OUTPUT_DIR);
+        String expectedChecksumSnapshot =
+                checksumDirectoryContentPartial(android, ODREFRESH_OUTPUT_DIR);
 
         // --check may delete the output.
         CommandResult result = runOdrefresh(android, "--check");
@@ -166,8 +168,8 @@ public final class ComposTestCase extends MicrodroidHostTestCaseBase {
         assertVmBccIsValid();
 
         // Save the actual checksum for the output directory.
-        String actualChecksumSnapshot = checksumDirectoryContentPartial(android,
-                ODREFRESH_OUTPUT_DIR);
+        String actualChecksumSnapshot =
+                checksumDirectoryContentPartial(android, ODREFRESH_OUTPUT_DIR);
 
         // Expect the output of Comp OS to be the same as compiled on Android.
         assertThat(actualChecksumSnapshot).isEqualTo(expectedChecksumSnapshot);
@@ -185,11 +187,12 @@ public final class ComposTestCase extends MicrodroidHostTestCaseBase {
         assertThat(bcc_file).isNotNull();
 
         // Add the BCC to test artifacts, in case it is ill-formed or otherwise interesting.
-        mTestLogs.addTestLog(bcc_file.getPath(), LogDataType.UNKNOWN,
-                new FileInputStreamSource(bcc_file));
+        mTestLogs.addTestLog(
+                bcc_file.getPath(), LogDataType.UNKNOWN, new FileInputStreamSource(bcc_file));
 
         // Find the validator binary - note that it's specified as a dependency in our Android.bp.
-        File validator = getTestInformation().getDependencyFile("hwtrust", /*targetFirst=*/ false);
+        File validator =
+                getTestInformation().getDependencyFile("hwtrust", /* targetFirst= */ false);
 
         CommandResult result =
                 new RunUtil()
