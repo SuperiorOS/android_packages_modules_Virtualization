@@ -46,6 +46,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -497,7 +498,11 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
                                     if (mCursorHandler != null) {
                                         mCursorHandler.interrupt();
                                     }
-                                    mCursorHandler = new CursorHandler(cursorSurfaceView, pfds[0]);
+                                    mCursorHandler =
+                                            new CursorHandler(
+                                                    surfaceView.getSurfaceControl(),
+                                                    cursorSurfaceView.getSurfaceControl(),
+                                                    pfds[0]);
                                     mCursorHandler.start();
                                     runWithDisplayService(
                                             (service) -> service.setCursorStream(pfds[1]));
@@ -763,12 +768,16 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
     }
 
     static class CursorHandler extends Thread {
-        private final SurfaceView mSurfaceView;
+        private final SurfaceControl mCursor;
         private final ParcelFileDescriptor mStream;
+        private final SurfaceControl.Transaction mTransaction;
 
-        CursorHandler(SurfaceView s, ParcelFileDescriptor stream) {
-            mSurfaceView = s;
+        CursorHandler(SurfaceControl main, SurfaceControl cursor, ParcelFileDescriptor stream) {
+            mCursor = cursor;
             mStream = stream;
+            mTransaction = new SurfaceControl.Transaction();
+
+            mTransaction.reparent(cursor, main).apply();
         }
 
         @Override
@@ -795,11 +804,7 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
                     }
                     float x = (float) (byteBuffer.getInt() & 0xFFFFFFFF);
                     float y = (float) (byteBuffer.getInt() & 0xFFFFFFFF);
-                    mSurfaceView.post(
-                            () -> {
-                                mSurfaceView.setTranslationX(x);
-                                mSurfaceView.setTranslationY(y);
-                            });
+                    mTransaction.setPosition(mCursor, x, y).apply();
                 }
             } catch (IOException e) {
                 Log.e(TAG, "failed to run CursorHandler", e);
