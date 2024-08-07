@@ -20,6 +20,8 @@ import android.system.virtualmachine.VirtualMachine;
 import android.system.virtualmachine.VirtualMachineException;
 import android.util.Log;
 
+import libcore.io.Streams;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,79 +31,36 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Forwards VM's console output to a file on the Android side, and VM's log output to Android logd.
  */
 class Logger {
-    private static final String TAG = MainActivity.TAG;
+    private Logger() {}
 
-    Logger(VirtualMachine vm, Path path, Executor executor) {
+    static void setup(VirtualMachine vm, Path path, ExecutorService executor) {
         try {
             InputStream console = vm.getConsoleOutput();
-            OutputStream consoleLogFile =
-                    new LineBufferedOutputStream(
-                            Files.newOutputStream(path, StandardOpenOption.CREATE));
-            executor.execute(new CopyStreamTask("console", console, consoleLogFile));
+            OutputStream file = Files.newOutputStream(path, StandardOpenOption.CREATE);
+            executor.submit(() -> Streams.copy(console, new LineBufferedOutputStream(file)));
 
             InputStream log = vm.getLogOutput();
-            executor.execute(new Reader("log", log));
+            executor.submit(() -> writeToLogd(log, vm.getName()));
         } catch (VirtualMachineException | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    /** Reads data from an input stream and posts it to the output data */
-    private static class Reader implements Runnable {
-        private final String mName;
-        private final InputStream mStream;
-
-        Reader(String name, InputStream stream) {
-            mName = name;
-            mStream = stream;
+    private static boolean writeToLogd(InputStream input, String vmName) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+        String line;
+        while ((line = reader.readLine()) != null && !Thread.interrupted()) {
+            Log.d(vmName, line);
         }
-
-        @Override
-        public void run() {
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(mStream));
-                String line;
-                while ((line = reader.readLine()) != null && !Thread.interrupted()) {
-                    Log.d(TAG, mName + ": " + line);
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Exception while posting " + mName + " output: " + e.getMessage());
-            }
-        }
-    }
-
-    private static class CopyStreamTask implements Runnable {
-        private final String mName;
-        private final InputStream mIn;
-        private final OutputStream mOut;
-
-        CopyStreamTask(String name, InputStream in, OutputStream out) {
-            mName = name;
-            mIn = in;
-            mOut = out;
-        }
-
-        @Override
-        public void run() {
-            try {
-                byte[] buffer = new byte[2048];
-                while (!Thread.interrupted()) {
-                    int len = mIn.read(buffer);
-                    if (len < 0) {
-                        break;
-                    }
-                    mOut.write(buffer, 0, len);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Exception while posting " + mName, e);
-            }
-        }
+        // TODO: find out why javac complains when the return type of this method is void. It
+        // (incorrectly?) thinks that IOException should be caught inside the lambda.
+        return true;
     }
 
     private static class LineBufferedOutputStream extends BufferedOutputStream {

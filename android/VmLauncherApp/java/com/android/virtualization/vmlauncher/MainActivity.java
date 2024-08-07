@@ -52,7 +52,6 @@ public class MainActivity extends Activity {
     // TODO: this path should be from outside of this activity
     private static final String VM_CONFIG_PATH = "/data/local/tmp/vm_config.json";
 
-    private static final boolean DEBUG = true;
     private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 101;
 
     private static final String ACTION_VM_LAUNCHER = "android.virtualization.VM_LAUNCHER";
@@ -115,9 +114,9 @@ public class MainActivity extends Activity {
 
         mDisplayProvider = new DisplayProvider(surfaceView, cursorSurfaceView);
 
-        if (DEBUG) {
+        if (config.getDebugLevel() == VirtualMachineConfig.DEBUG_LEVEL_FULL) {
             Path logPath = getFileStreamPath("console.log").toPath();
-            new Logger(mVirtualMachine, logPath, mExecutorService);
+            Logger.setup(mVirtualMachine, logPath, mExecutorService);
         }
     }
 
