@@ -31,9 +31,9 @@ import android.system.virtualmachine.VirtualMachineException;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.view.WindowManager;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -74,8 +74,6 @@ public class MainActivity extends Activity {
         }
         checkAndRequestRecordAudioPermission();
         mExecutorService = Executors.newCachedThreadPool();
-        getWindow().setDecorFitsSystemWindows(false);
-        setContentView(R.layout.activity_main);
 
         ConfigJson json = ConfigJson.from(VM_CONFIG_PATH);
         VirtualMachineConfig config = json.toConfig(this);
@@ -94,30 +92,28 @@ public class MainActivity extends Activity {
                             finish();
                         });
 
-        SurfaceView surfaceView = findViewById(R.id.surface_view);
-        SurfaceView cursorSurfaceView = findViewById(R.id.cursor_surface_view);
-        View backgroundTouchView = findViewById(R.id.background_touch_view);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Setup UI
+        setContentView(R.layout.activity_main);
+        SurfaceView mainView = findViewById(R.id.surface_view);
+        SurfaceView cursorView = findViewById(R.id.cursor_surface_view);
+        View touchView = findViewById(R.id.background_touch_view);
+        makeFullscreen();
 
-        // Fullscreen:
-        WindowInsetsController windowInsetsController = surfaceView.getWindowInsetsController();
-        windowInsetsController.setSystemBarsBehavior(
+        // Connect the views to the VM
+        mInputForwarder = new InputForwarder(this, mVirtualMachine, touchView, mainView, mainView);
+        mDisplayProvider = new DisplayProvider(mainView, cursorView);
+
+        Path logPath = getFileStreamPath(mVirtualMachine.getName() + ".log").toPath();
+        Logger.setup(mVirtualMachine, logPath, mExecutorService);
+    }
+
+    private void makeFullscreen() {
+        Window w = getWindow();
+        w.setDecorFitsSystemWindows(false);
+        WindowInsetsController insetsCtrl = w.getInsetsController();
+        insetsCtrl.hide(WindowInsets.Type.systemBars());
+        insetsCtrl.setSystemBarsBehavior(
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-        windowInsetsController.hide(WindowInsets.Type.systemBars());
-
-        View touchReceiver = backgroundTouchView;
-        View mouseReceiver = surfaceView;
-        View keyReceiver = surfaceView;
-        mInputForwarder =
-                new InputForwarder(
-                        this, mVirtualMachine, touchReceiver, mouseReceiver, keyReceiver);
-
-        mDisplayProvider = new DisplayProvider(surfaceView, cursorSurfaceView);
-
-        if (config.getDebugLevel() == VirtualMachineConfig.DEBUG_LEVEL_FULL) {
-            Path logPath = getFileStreamPath("console.log").toPath();
-            Logger.setup(mVirtualMachine, logPath, mExecutorService);
-        }
     }
 
     @Override
@@ -135,35 +131,27 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (mVirtualMachine != null) {
-            try {
-                mVirtualMachine.sendLidEvent(/* close */ true);
-                mVirtualMachine.suspend();
-            } catch (VirtualMachineException e) {
-                Log.e(TAG, "Failed to suspend VM" + e);
-            }
+        try {
+            mVirtualMachine.suspend();
+        } catch (VirtualMachineException e) {
+            Log.e(TAG, "Failed to suspend VM" + e);
         }
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (mVirtualMachine != null) {
-            try {
-                mVirtualMachine.resume();
-                mVirtualMachine.sendLidEvent(/* close */ false);
-            } catch (VirtualMachineException e) {
-                Log.e(TAG, "Failed to resume VM" + e);
-            }
+        try {
+            mVirtualMachine.resume();
+        } catch (VirtualMachineException e) {
+            Log.e(TAG, "Failed to resume VM" + e);
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mExecutorService != null) {
-            mExecutorService.shutdownNow();
-        }
+        mExecutorService.shutdownNow();
         mInputForwarder.cleanUp();
         Log.d(TAG, "destroyed");
     }

@@ -17,6 +17,7 @@
 package com.android.virtualization.vmlauncher;
 
 import android.system.virtualmachine.VirtualMachine;
+import android.system.virtualmachine.VirtualMachineConfig;
 import android.system.virtualmachine.VirtualMachineException;
 import android.util.Log;
 
@@ -40,6 +41,10 @@ class Logger {
     private Logger() {}
 
     static void setup(VirtualMachine vm, Path path, ExecutorService executor) {
+        if (vm.getConfig().getDebugLevel() == VirtualMachineConfig.DEBUG_LEVEL_FULL) {
+            return;
+        }
+
         try {
             InputStream console = vm.getConsoleOutput();
             OutputStream file = Files.newOutputStream(path, StandardOpenOption.CREATE);
