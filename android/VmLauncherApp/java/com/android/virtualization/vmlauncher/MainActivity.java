@@ -23,8 +23,6 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
-import android.crosvm.ICrosvmAndroidDisplayService;
-import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -36,15 +34,11 @@ import android.system.virtualmachine.VirtualMachineConfig;
 import android.system.virtualmachine.VirtualMachineException;
 import android.system.virtualmachine.VirtualMachineManager;
 import android.util.Log;
-import android.view.SurfaceControl;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-
-import libcore.io.IoBridge;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -72,9 +66,9 @@ public class MainActivity extends Activity {
 
     private ExecutorService mExecutorService;
     private VirtualMachine mVirtualMachine;
-    private CursorHandler mCursorHandler;
     private ClipboardManager mClipboardManager;
     private InputForwarder mInputForwarder;
+    private DisplayProvider mDisplayProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,14 +81,6 @@ public class MainActivity extends Activity {
         }
         checkAndRequestRecordAudioPermission();
         mExecutorService = Executors.newCachedThreadPool();
-        try {
-            // To ensure that the previous display service is removed.
-            IVirtualizationServiceInternal.Stub.asInterface(
-                            ServiceManager.waitForService("android.system.virtualizationservice"))
-                    .clearDisplayService();
-        } catch (RemoteException e) {
-            Log.d(TAG, "failed to clearDisplayService");
-        }
         getWindow().setDecorFitsSystemWindows(false);
         setContentView(R.layout.activity_main);
         VirtualMachineCallback callback =
@@ -171,105 +157,7 @@ public class MainActivity extends Activity {
 
         SurfaceView surfaceView = findViewById(R.id.surface_view);
         SurfaceView cursorSurfaceView = findViewById(R.id.cursor_surface_view);
-        cursorSurfaceView.setZOrderMediaOverlay(true);
         View backgroundTouchView = findViewById(R.id.background_touch_view);
-        surfaceView
-                .getHolder()
-                .addCallback(
-                        // TODO(b/331708504): it should be handled in AVF framework.
-                        new SurfaceHolder.Callback() {
-                            @Override
-                            public void surfaceCreated(SurfaceHolder holder) {
-                                Log.d(
-                                        TAG,
-                                        "surface size: "
-                                                + holder.getSurfaceFrame().flattenToString());
-                                Log.d(
-                                        TAG,
-                                        "ICrosvmAndroidDisplayService.setSurface("
-                                                + holder.getSurface()
-                                                + ")");
-                                runWithDisplayService(
-                                        s ->
-                                                s.setSurface(
-                                                        holder.getSurface(),
-                                                        false /* forCursor */));
-                                // TODO  execute the above and the below togther with the same call
-                                // to runWithDisplayService. Currently this doesn't work because
-                                // setSurface somtimes trigger an exception and as a result
-                                // drawSavedFrameForSurface is skipped.
-                                runWithDisplayService(
-                                        s -> s.drawSavedFrameForSurface(false /* forCursor */));
-                            }
-
-                            @Override
-                            public void surfaceChanged(
-                                    SurfaceHolder holder, int format, int width, int height) {
-                                Log.d(
-                                        TAG,
-                                        "surface changed, width: " + width + ", height: " + height);
-                            }
-
-                            @Override
-                            public void surfaceDestroyed(SurfaceHolder holder) {
-                                Log.d(TAG, "ICrosvmAndroidDisplayService.removeSurface()");
-                                runWithDisplayService(
-                                        (service) -> service.removeSurface(false /* forCursor */));
-                            }
-                        });
-        cursorSurfaceView.getHolder().setFormat(PixelFormat.RGBA_8888);
-        cursorSurfaceView
-                .getHolder()
-                .addCallback(
-                        new SurfaceHolder.Callback() {
-                            @Override
-                            public void surfaceCreated(SurfaceHolder holder) {
-                                try {
-                                    ParcelFileDescriptor[] pfds =
-                                            ParcelFileDescriptor.createSocketPair();
-                                    if (mCursorHandler != null) {
-                                        mCursorHandler.interrupt();
-                                    }
-                                    mCursorHandler =
-                                            new CursorHandler(
-                                                    surfaceView.getSurfaceControl(),
-                                                    cursorSurfaceView.getSurfaceControl(),
-                                                    pfds[0]);
-                                    mCursorHandler.start();
-                                    runWithDisplayService(
-                                            (service) -> service.setCursorStream(pfds[1]));
-                                } catch (Exception e) {
-                                    Log.d(TAG, "failed to run cursor stream handler", e);
-                                }
-                                Log.d(
-                                        TAG,
-                                        "ICrosvmAndroidDisplayService.setSurface("
-                                                + holder.getSurface()
-                                                + ")");
-                                runWithDisplayService(
-                                        (service) ->
-                                                service.setSurface(
-                                                        holder.getSurface(), true /* forCursor */));
-                            }
-
-                            @Override
-                            public void surfaceChanged(
-                                    SurfaceHolder holder, int format, int width, int height) {
-                                Log.d(
-                                        TAG,
-                                        "cursor surface changed, width: "
-                                                + width
-                                                + ", height: "
-                                                + height);
-                            }
-
-                            @Override
-                            public void surfaceDestroyed(SurfaceHolder holder) {
-                                Log.d(TAG, "ICrosvmAndroidDisplayService.removeSurface()");
-                                runWithDisplayService(
-                                        (service) -> service.removeSurface(true /* forCursor */));
-                            }
-                        });
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Fullscreen:
@@ -284,6 +172,8 @@ public class MainActivity extends Activity {
         mInputForwarder =
                 new InputForwarder(
                         this, mVirtualMachine, touchReceiver, mouseReceiver, keyReceiver);
+
+        mDisplayProvider = new DisplayProvider(surfaceView, cursorSurfaceView);
     }
 
     @Override
@@ -295,7 +185,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        runWithDisplayService(s -> s.saveFrameForSurface(false /* forCursor */));
+        mDisplayProvider.notifyDisplayIsGoingToInvisible();
     }
 
     @Override
@@ -480,73 +370,6 @@ public class MainActivity extends Activity {
                             Log.e(TAG, "Failed to send URL to the VM", e);
                         }
                     });
-        }
-    }
-
-    @FunctionalInterface
-    public interface RemoteExceptionCheckedFunction<T> {
-        void apply(T t) throws RemoteException;
-    }
-
-    private void runWithDisplayService(
-            RemoteExceptionCheckedFunction<ICrosvmAndroidDisplayService> func) {
-        IVirtualizationServiceInternal vs =
-                IVirtualizationServiceInternal.Stub.asInterface(
-                        ServiceManager.waitForService("android.system.virtualizationservice"));
-        try {
-            Log.d(TAG, "wait for the display service");
-            ICrosvmAndroidDisplayService service =
-                    ICrosvmAndroidDisplayService.Stub.asInterface(vs.waitDisplayService());
-            assert service != null;
-            func.apply(service);
-            Log.d(TAG, "display service runs successfully");
-        } catch (Exception e) {
-            Log.d(TAG, "error on running display service", e);
-        }
-    }
-
-    static class CursorHandler extends Thread {
-        private final SurfaceControl mCursor;
-        private final ParcelFileDescriptor mStream;
-        private final SurfaceControl.Transaction mTransaction;
-
-        CursorHandler(SurfaceControl main, SurfaceControl cursor, ParcelFileDescriptor stream) {
-            mCursor = cursor;
-            mStream = stream;
-            mTransaction = new SurfaceControl.Transaction();
-
-            mTransaction.reparent(cursor, main).apply();
-        }
-
-        @Override
-        public void run() {
-            Log.d(TAG, "running CursorHandler");
-            try {
-                ByteBuffer byteBuffer = ByteBuffer.allocate(8 /* (x: u32, y: u32) */);
-                byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-                while (true) {
-                    if (Thread.interrupted()) {
-                        Log.d(TAG, "interrupted: exiting CursorHandler");
-                        return;
-                    }
-                    byteBuffer.clear();
-                    int bytes =
-                            IoBridge.read(
-                                    mStream.getFileDescriptor(),
-                                    byteBuffer.array(),
-                                    0,
-                                    byteBuffer.array().length);
-                    if (bytes == -1) {
-                        Log.e(TAG, "cannot read from cursor stream, stop the handler");
-                        return;
-                    }
-                    float x = (float) (byteBuffer.getInt() & 0xFFFFFFFF);
-                    float y = (float) (byteBuffer.getInt() & 0xFFFFFFFF);
-                    mTransaction.setPosition(mCursor, x, y).apply();
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "failed to run CursorHandler", e);
-            }
         }
     }
 
