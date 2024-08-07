@@ -25,9 +25,6 @@ import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
-import android.os.ServiceManager;
-import android.system.virtualizationservice_internal.IVirtualizationServiceInternal;
 import android.system.virtualmachine.VirtualMachine;
 import android.system.virtualmachine.VirtualMachineConfig;
 import android.system.virtualmachine.VirtualMachineException;
@@ -38,17 +35,15 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -100,20 +95,6 @@ public class MainActivity extends Activity {
                             finish();
                         });
 
-        try {
-            if (DEBUG) {
-                InputStream console = mVirtualMachine.getConsoleOutput();
-                InputStream log = mVirtualMachine.getLogOutput();
-                OutputStream consoleLogFile =
-                        new LineBufferedOutputStream(
-                                getApplicationContext().openFileOutput("console.log", 0));
-                mExecutorService.execute(new CopyStreamTask("console", console, consoleLogFile));
-                mExecutorService.execute(new Reader("log", log));
-            }
-        } catch (VirtualMachineException | IOException e) {
-            throw new RuntimeException(e);
-        }
-
         SurfaceView surfaceView = findViewById(R.id.surface_view);
         SurfaceView cursorSurfaceView = findViewById(R.id.cursor_surface_view);
         View backgroundTouchView = findViewById(R.id.background_touch_view);
@@ -133,6 +114,11 @@ public class MainActivity extends Activity {
                         this, mVirtualMachine, touchReceiver, mouseReceiver, keyReceiver);
 
         mDisplayProvider = new DisplayProvider(surfaceView, cursorSurfaceView);
+
+        if (DEBUG) {
+            Path logPath = getFileStreamPath("console.log").toPath();
+            new Logger(mVirtualMachine, logPath, mExecutorService);
+        }
     }
 
     @Override
@@ -340,72 +326,4 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Reads data from an input stream and posts it to the output data */
-    static class Reader implements Runnable {
-        private final String mName;
-        private final InputStream mStream;
-
-        Reader(String name, InputStream stream) {
-            mName = name;
-            mStream = stream;
-        }
-
-        @Override
-        public void run() {
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(mStream));
-                String line;
-                while ((line = reader.readLine()) != null && !Thread.interrupted()) {
-                    Log.d(TAG, mName + ": " + line);
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Exception while posting " + mName + " output: " + e.getMessage());
-            }
-        }
-    }
-
-    private static class CopyStreamTask implements Runnable {
-        private final String mName;
-        private final InputStream mIn;
-        private final OutputStream mOut;
-
-        CopyStreamTask(String name, InputStream in, OutputStream out) {
-            mName = name;
-            mIn = in;
-            mOut = out;
-        }
-
-        @Override
-        public void run() {
-            try {
-                byte[] buffer = new byte[2048];
-                while (!Thread.interrupted()) {
-                    int len = mIn.read(buffer);
-                    if (len < 0) {
-                        break;
-                    }
-                    mOut.write(buffer, 0, len);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Exception while posting " + mName, e);
-            }
-        }
-    }
-
-    private static class LineBufferedOutputStream extends BufferedOutputStream {
-        LineBufferedOutputStream(OutputStream out) {
-            super(out);
-        }
-
-        @Override
-        public void write(byte[] buf, int off, int len) throws IOException {
-            super.write(buf, off, len);
-            for (int i = 0; i < len; ++i) {
-                if (buf[off + i] == '\n') {
-                    flush();
-                    break;
-                }
-            }
-        }
-    }
 }
