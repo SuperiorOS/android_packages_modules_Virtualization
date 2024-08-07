@@ -29,10 +29,8 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.system.virtualizationservice_internal.IVirtualizationServiceInternal;
 import android.system.virtualmachine.VirtualMachine;
-import android.system.virtualmachine.VirtualMachineCallback;
 import android.system.virtualmachine.VirtualMachineConfig;
 import android.system.virtualmachine.VirtualMachineException;
-import android.system.virtualmachine.VirtualMachineManager;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -56,7 +54,8 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     static final String TAG = "VmLauncherApp";
-    private static final String VM_NAME = "my_custom_vm";
+    // TODO: this path should be from outside of this activity
+    private static final String VM_CONFIG_PATH = "/data/local/tmp/vm_config.json";
 
     private static final boolean DEBUG = true;
     private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 101;
@@ -83,65 +82,25 @@ public class MainActivity extends Activity {
         mExecutorService = Executors.newCachedThreadPool();
         getWindow().setDecorFitsSystemWindows(false);
         setContentView(R.layout.activity_main);
-        VirtualMachineCallback callback =
-                new VirtualMachineCallback() {
-                    // store reference to ExecutorService to avoid race condition
-                    private final ExecutorService mService = mExecutorService;
 
-                    @Override
-                    public void onPayloadStarted(VirtualMachine vm) {
-                        // This event is only from Microdroid-based VM. Custom VM shouldn't emit
-                        // this.
-                    }
+        ConfigJson json = ConfigJson.from(VM_CONFIG_PATH);
+        VirtualMachineConfig config = json.toConfig(this);
 
-                    @Override
-                    public void onPayloadReady(VirtualMachine vm) {
-                        // This event is only from Microdroid-based VM. Custom VM shouldn't emit
-                        // this.
-                    }
-
-                    @Override
-                    public void onPayloadFinished(VirtualMachine vm, int exitCode) {
-                        // This event is only from Microdroid-based VM. Custom VM shouldn't emit
-                        // this.
-                    }
-
-                    @Override
-                    public void onError(VirtualMachine vm, int errorCode, String message) {
-                        Log.e(TAG, "Error from VM. code: " + errorCode + " (" + message + ")");
-                        setResult(RESULT_CANCELED);
-                        finish();
-                    }
-
-                    @Override
-                    public void onStopped(VirtualMachine vm, int reason) {
-                        Log.d(TAG, "VM stopped. Reason: " + reason);
-                        setResult(RESULT_OK);
-                        finish();
-                    }
-                };
+        Runner runner;
+        try {
+            runner = Runner.create(this, config);
+        } catch (VirtualMachineException e) {
+            throw new RuntimeException(e);
+        }
+        mVirtualMachine = runner.getVm();
+        runner.getExitStatus()
+                .thenAcceptAsync(
+                        success -> {
+                            setResult(success ? RESULT_OK : RESULT_CANCELED);
+                            finish();
+                        });
 
         try {
-            VirtualMachineConfig config =
-                    ConfigJson.from("/data/local/tmp/vm_config.json").toConfig(this);
-            VirtualMachineManager vmm =
-                    getApplication().getSystemService(VirtualMachineManager.class);
-            if (vmm == null) {
-                Log.e(TAG, "vmm is null");
-                return;
-            }
-            mVirtualMachine = vmm.getOrCreate(VM_NAME, config);
-            try {
-                mVirtualMachine.setConfig(config);
-            } catch (VirtualMachineException e) {
-                vmm.delete(VM_NAME);
-                mVirtualMachine = vmm.create(VM_NAME, config);
-                Log.e(TAG, "error for setting VM config", e);
-            }
-
-            Log.d(TAG, "vm start");
-            mVirtualMachine.run();
-            mVirtualMachine.setCallback(Executors.newSingleThreadExecutor(), callback);
             if (DEBUG) {
                 InputStream console = mVirtualMachine.getConsoleOutput();
                 InputStream log = mVirtualMachine.getLogOutput();
