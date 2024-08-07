@@ -25,7 +25,6 @@ import android.content.ClipboardManager;
 import android.content.Intent;
 import android.crosvm.ICrosvmAndroidDisplayService;
 import android.graphics.PixelFormat;
-import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -37,8 +36,6 @@ import android.system.virtualmachine.VirtualMachineConfig;
 import android.system.virtualmachine.VirtualMachineException;
 import android.system.virtualmachine.VirtualMachineManager;
 import android.util.Log;
-import android.view.InputDevice;
-import android.view.KeyEvent;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -63,8 +60,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends Activity implements InputManager.InputDeviceListener {
-    private static final String TAG = "VmLauncherApp";
+public class MainActivity extends Activity {
+    static final String TAG = "VmLauncherApp";
     private static final String VM_NAME = "my_custom_vm";
 
     private static final boolean DEBUG = true;
@@ -77,79 +74,7 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
     private VirtualMachine mVirtualMachine;
     private CursorHandler mCursorHandler;
     private ClipboardManager mClipboardManager;
-
-
-    private static boolean isVolumeKey(int keyCode) {
-        return keyCode == KeyEvent.KEYCODE_VOLUME_UP
-                || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-                || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE;
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (mVirtualMachine == null) {
-            return false;
-        }
-        return !isVolumeKey(keyCode) && mVirtualMachine.sendKeyEvent(event);
-    }
-
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (mVirtualMachine == null) {
-            return false;
-        }
-        return !isVolumeKey(keyCode) && mVirtualMachine.sendKeyEvent(event);
-    }
-
-    private void registerInputDeviceListener() {
-        InputManager inputManager = getSystemService(InputManager.class);
-        if (inputManager == null) {
-            Log.e(TAG, "failed to registerInputDeviceListener because InputManager is null");
-            return;
-        }
-        inputManager.registerInputDeviceListener(this, null);
-    }
-
-    private void unregisterInputDeviceListener() {
-        InputManager inputManager = getSystemService(InputManager.class);
-        if (inputManager == null) {
-            Log.e(TAG, "failed to unregisterInputDeviceListener because InputManager is null");
-            return;
-        }
-        inputManager.unregisterInputDeviceListener(this);
-    }
-
-    private void setTabletModeConditionally() {
-        if (mVirtualMachine == null) {
-            Log.e(TAG, "failed to setTabletModeConditionally because VirtualMachine is null");
-            return;
-        }
-        for (int id : InputDevice.getDeviceIds()) {
-            InputDevice d = InputDevice.getDevice(id);
-            if (!d.isVirtual() && d.isEnabled() && d.isFullKeyboard()) {
-                Log.d(TAG, "the device has a physical keyboard, turn off tablet mode");
-                mVirtualMachine.sendTabletModeEvent(false);
-                return;
-            }
-        }
-        mVirtualMachine.sendTabletModeEvent(true);
-        Log.d(TAG, "the device doesn't have a physical keyboard, turn on tablet mode");
-    }
-
-    @Override
-    public void onInputDeviceAdded(int deviceId) {
-        setTabletModeConditionally();
-    }
-
-    @Override
-    public void onInputDeviceRemoved(int deviceId) {
-        setTabletModeConditionally();
-    }
-
-    @Override
-    public void onInputDeviceChanged(int deviceId) {
-        setTabletModeConditionally();
-    }
+    private InputForwarder mInputForwarder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -248,25 +173,6 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
         SurfaceView cursorSurfaceView = findViewById(R.id.cursor_surface_view);
         cursorSurfaceView.setZOrderMediaOverlay(true);
         View backgroundTouchView = findViewById(R.id.background_touch_view);
-        backgroundTouchView.setOnTouchListener(
-                (v, event) -> {
-                    if (mVirtualMachine == null) {
-                        return false;
-                    }
-                    return mVirtualMachine.sendMultiTouchEvent(event);
-                });
-        surfaceView.requestUnbufferedDispatch(InputDevice.SOURCE_ANY);
-        surfaceView.setOnCapturedPointerListener(
-                (v, event) -> {
-                    if (mVirtualMachine == null) {
-                        return false;
-                    }
-                    int eventSource = event.getSource();
-                    if ((eventSource & InputDevice.SOURCE_CLASS_POSITION) != 0) {
-                        return mVirtualMachine.sendTrackpadEvent(event);
-                    }
-                    return mVirtualMachine.sendMouseEvent(event);
-                });
         surfaceView
                 .getHolder()
                 .addCallback(
@@ -371,13 +277,19 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
         windowInsetsController.setSystemBarsBehavior(
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         windowInsetsController.hide(WindowInsets.Type.systemBars());
-        registerInputDeviceListener();
+
+        View touchReceiver = backgroundTouchView;
+        View mouseReceiver = surfaceView;
+        View keyReceiver = surfaceView;
+        mInputForwarder =
+                new InputForwarder(
+                        this, mVirtualMachine, touchReceiver, mouseReceiver, keyReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        setTabletModeConditionally();
+        mInputForwarder.setTabletModeConditionally();
     }
 
     @Override
@@ -418,7 +330,7 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
         if (mExecutorService != null) {
             mExecutorService.shutdownNow();
         }
-        unregisterInputDeviceListener();
+        mInputForwarder.cleanUp();
         Log.d(TAG, "destroyed");
     }
 
