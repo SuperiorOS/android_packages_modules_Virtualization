@@ -212,7 +212,7 @@ public class MainActivity extends Activity implements InputManager.InputDeviceLi
 
         try {
             VirtualMachineConfig config =
-                    VmConfigJson.from("/data/local/tmp/vm_config.json").toConfig(this);
+                    ConfigJson.from("/data/local/tmp/vm_config.json").toConfig(this);
             VirtualMachineManager vmm =
                     getApplication().getSystemService(VirtualMachineManager.class);
             if (vmm == null) {
