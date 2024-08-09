@@ -155,6 +155,9 @@ echo "Ensure screen unlocked"
 adb shell svc power stayon true
 adb shell wm dismiss-keyguard
 
+echo "Granting runtime permissions to ensure VmLauncher is focused"
+adb shell pm grant ${pkg_name} android.permission.RECORD_AUDIO
+
 echo "Starting ferrochrome"
 adb shell am start-activity -a ${ACTION_NAME} > /dev/null
 
