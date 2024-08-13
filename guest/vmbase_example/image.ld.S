@@ -16,6 +16,10 @@
 
 MEMORY
 {
+#if defined(VMBASE_EXAMPLE_IS_BIOS)
 	image		: ORIGIN = 0x80200000, LENGTH = 2M
 	writable_data	: ORIGIN = 0x80400000, LENGTH = 2M
+#else
+#error "Unexpected vmbase_example mode: failed to generate image layout"
+#endif
 }
