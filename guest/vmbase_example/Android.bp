@@ -52,6 +52,12 @@ cc_object {
     cflags: ["-DVMBASE_EXAMPLE_IS_BIOS"],
 }
 
+cc_object {
+    name: "vmbase_example_kernel.ld",
+    defaults: ["vmbase_example_ld_defaults"],
+    cflags: ["-DVMBASE_EXAMPLE_IS_KERNEL"],
+}
+
 cc_defaults {
     name: "vmbase_example_elf_defaults",
     defaults: ["vmbase_elf_defaults"],
@@ -73,10 +79,32 @@ cc_binary {
     ],
 }
 
+cc_binary {
+    name: "vmbase_example_kernel",
+    defaults: ["vmbase_example_elf_defaults"],
+    asflags: ["-DVMBASE_EXAMPLE_IS_KERNEL"],
+    linker_scripts: [
+        ":vmbase_example_kernel.ld",
+        ":vmbase_sections",
+    ],
+}
+
 raw_binary {
     name: "vmbase_example_bios_bin",
     stem: "vmbase_example_bios.bin",
     src: ":vmbase_example_bios",
+    enabled: false,
+    target: {
+        android_arm64: {
+            enabled: true,
+        },
+    },
+}
+
+raw_binary {
+    name: "vmbase_example_kernel_bin",
+    stem: "vmbase_example_kernel.bin",
+    src: ":vmbase_example_kernel",
     enabled: false,
     target: {
         android_arm64: {

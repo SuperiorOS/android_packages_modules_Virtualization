@@ -19,6 +19,7 @@ rust_test {
     ],
     data: [
         ":vmbase_example_bios_bin",
+        ":vmbase_example_kernel_bin",
     ],
     test_suites: ["general-tests"],
     enabled: false,
