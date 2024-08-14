@@ -31,17 +31,27 @@ use std::{
 };
 use vmclient::{DeathReason, VmInstance};
 
+const VMBASE_EXAMPLE_KERNEL_PATH: &str = "vmbase_example_kernel.bin";
 const VMBASE_EXAMPLE_BIOS_PATH: &str = "vmbase_example_bios.bin";
 const TEST_DISK_IMAGE_PATH: &str = "test_disk.img";
 const EMPTY_DISK_IMAGE_PATH: &str = "empty_disk.img";
 
+/// Runs the vmbase_example VM as an unprotected VM kernel via VirtualizationService.
+#[test]
+fn test_run_example_kernel_vm() -> Result<(), Error> {
+    run_test(Some(open_payload(VMBASE_EXAMPLE_KERNEL_PATH)?), None)
+}
+
 /// Runs the vmbase_example VM as an unprotected VM BIOS via VirtualizationService.
 #[test]
 fn test_run_example_bios_vm() -> Result<(), Error> {
-    run_test(Some(open_payload(VMBASE_EXAMPLE_BIOS_PATH)?))
+    run_test(None, Some(open_payload(VMBASE_EXAMPLE_BIOS_PATH)?))
 }
 
-fn run_test(bootloader: Option<ParcelFileDescriptor>) -> Result<(), Error> {
+fn run_test(
+    kernel: Option<ParcelFileDescriptor>,
+    bootloader: Option<ParcelFileDescriptor>,
+) -> Result<(), Error> {
     android_logger::init_once(
         android_logger::Config::default()
             .with_tag("vmbase")
@@ -89,7 +99,7 @@ fn run_test(bootloader: Option<ParcelFileDescriptor>) -> Result<(), Error> {
 
     let config = VirtualMachineConfig::RawConfig(VirtualMachineRawConfig {
         name: String::from("VmBaseTest"),
-        kernel: None,
+        kernel,
         initrd: None,
         params: None,
         bootloader,
