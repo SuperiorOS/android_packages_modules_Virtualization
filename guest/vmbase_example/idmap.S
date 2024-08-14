@@ -43,8 +43,12 @@ idmap:
 	.quad		.L_TT_TYPE_TABLE + 0f		// up to 1 GiB of DRAM
 	.fill		509, 8, 0x0			// 509 GiB of remaining VA space
 
-	/* level 2 */
-0:	.quad		.L_BLOCK_MEM | 0x80000000	// DT provided by VMM
+0:	/* level 2 */
+#if defined(VMBASE_EXAMPLE_IS_BIOS)
+	.quad		.L_BLOCK_MEM | 0x80000000	// DT provided by VMM
 	.quad		.L_BLOCK_MEM_XIP | 0x80200000	// 2 MiB of DRAM containing image
 	.quad		.L_BLOCK_MEM | 0x80400000	// 2 MiB of writable DRAM
 	.fill		509, 8, 0x0
+#else
+#error "Unexpected vmbase_example mode: failed to generate idmap"
+#endif
