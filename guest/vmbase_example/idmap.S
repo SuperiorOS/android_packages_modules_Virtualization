@@ -49,6 +49,10 @@ idmap:
 	.quad		.L_BLOCK_MEM_XIP | 0x80200000	// 2 MiB of DRAM containing image
 	.quad		.L_BLOCK_MEM | 0x80400000	// 2 MiB of writable DRAM
 	.fill		509, 8, 0x0
+#elif defined(VMBASE_EXAMPLE_IS_KERNEL)
+	.quad		.L_BLOCK_MEM_XIP | 0x80000000	// 2 MiB of DRAM containing image
+	.quad		.L_BLOCK_MEM | 0x80200000	// 2 MiB of writable DRAM
+	.fill		510, 8, 0x0
 #else
 #error "Unexpected vmbase_example mode: failed to generate idmap"
 #endif
