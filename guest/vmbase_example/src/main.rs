@@ -25,10 +25,10 @@ extern crate alloc;
 
 use crate::layout::{boot_stack_range, print_addresses, DEVICE_REGION};
 use crate::pci::{check_pci, get_bar_region};
-use aarch64_paging::paging::MemoryRegion;
 use aarch64_paging::paging::VirtualAddress;
 use aarch64_paging::MapError;
 use alloc::{vec, vec::Vec};
+use core::mem;
 use core::ptr::addr_of_mut;
 use cstr::cstr;
 use fdtpci::PciInfo;
@@ -52,16 +52,12 @@ generate_image_header!();
 main!(main);
 configure_heap!(SIZE_64KB);
 
-fn init_page_table(dtb: &MemoryRegion, pci_bar_range: &MemoryRegion) -> Result<(), MapError> {
-    let mut page_table = PageTable::default();
-
+fn init_page_table(page_table: &mut PageTable) -> Result<(), MapError> {
     page_table.map_device(&DEVICE_REGION)?;
     page_table.map_code(&text_range().into())?;
     page_table.map_rodata(&rodata_range().into())?;
     page_table.map_data(&scratch_range().into())?;
     page_table.map_data(&boot_stack_range().into())?;
-    page_table.map_rodata(dtb)?;
-    page_table.map_device(pci_bar_range)?;
 
     info!("Activating IdMap...");
     // SAFETY: page_table duplicates the static mappings for everything that the Rust code is
@@ -102,7 +98,11 @@ pub fn main(arg0: u64, arg1: u64, arg2: u64, arg3: u64) {
 
     check_alloc();
 
-    init_page_table(&fdt_region, &get_bar_region(&pci_info)).unwrap();
+    let mut page_table = PageTable::default();
+    page_table.map_rodata(&fdt_region).unwrap();
+    page_table.map_device(&get_bar_region(&pci_info)).unwrap();
+    init_page_table(&mut page_table).unwrap();
+    mem::drop(page_table); // Release PageTable and switch back to idmap.S
 
     check_data();
     check_dice();
