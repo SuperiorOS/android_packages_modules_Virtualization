@@ -1297,7 +1297,7 @@ public class MicrodroidTests extends MicrodroidDeviceTestBase {
                 // then pvmfw, vm_entry (Microdroid kernel) and Microdroid payload entries.
                 // Before Android V we did not require that vendor code contain any DICE entries
                 // preceding pvmfw, so the minimum is one less.
-                int minDiceChainSize = getVendorApiLevel() >= 202404 ? 5 : 4;
+                int minDiceChainSize = getVendorApiLevel() > 202404 ? 5 : 4;
                 assertThat(diceChainSize).isAtLeast(minDiceChainSize);
             } else {
                 // pvmfw truncates the DICE chain it gets, so we expect exactly entries for
