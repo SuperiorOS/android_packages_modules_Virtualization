@@ -31,7 +31,6 @@ aidl_interface {
             apex_available: [
                 "com.android.virt",
                 "com.android.compos",
-                "com.android.microfuchsia",
             ],
         },
     },
@@ -151,7 +150,6 @@ aidl_interface {
             apex_available: [
                 "com.android.virt",
                 "com.android.compos",
-                "com.android.microfuchsia",
             ],
         },
     },
