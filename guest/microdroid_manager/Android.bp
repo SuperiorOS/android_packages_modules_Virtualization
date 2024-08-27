@@ -59,6 +59,7 @@ rust_defaults {
         "libvsock",
         "librand",
         "libzeroize",
+        "libsafe_ownedfd",
     ],
     init_rc: ["microdroid_manager.rc"],
     multilib: {
