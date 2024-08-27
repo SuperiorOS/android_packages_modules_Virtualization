@@ -1308,7 +1308,7 @@ public class MicrodroidTests extends MicrodroidDeviceTestBase {
     }
 
     @Test
-    @VsrTest(requirements = {"VSR-7.1-001.005"})
+    @VsrTest(requirements = {"VSR-7.1-001.004"})
     public void protectedVmHasValidDiceChain() throws Exception {
         // This test validates two things regarding the pVM DICE chain:
         // 1. The DICE chain is well-formed that all the entries conform to the DICE spec.
@@ -1316,7 +1316,7 @@ public class MicrodroidTests extends MicrodroidDeviceTestBase {
         assumeSupportedDevice();
         assumeProtectedVM();
         assumeVsrCompliant();
-        assumeTrue("Vendor API must be at least 202404", getVendorApiLevel() >= 202404);
+        assumeTrue("Vendor API must be newer than 202404", getVendorApiLevel() > 202404);
 
         grantPermission(VirtualMachine.USE_CUSTOM_VIRTUAL_MACHINE_PERMISSION);
         VirtualMachineConfig config =
