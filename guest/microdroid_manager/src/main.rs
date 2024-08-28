@@ -200,13 +200,7 @@ fn try_main() -> Result<()> {
     );
     info!("started.");
 
-    // SAFETY: This is the only place we take the ownership of the fd of the vm payload service.
-    //
-    // To ensure that the CLOEXEC flag is set on the file descriptor as early as possible,
-    // it is necessary to fetch the socket corresponding to vm_payload_service at the
-    // very beginning, as android_get_control_socket() sets the CLOEXEC flag on the file
-    // descriptor.
-    let vm_payload_service_fd = unsafe { prepare_vm_payload_service_socket()? };
+    let vm_payload_service_fd = prepare_vm_payload_service_socket()?;
 
     load_crashkernel_if_supported().context("Failed to load crashkernel")?;
 
@@ -488,12 +482,7 @@ fn get_vms_rpc_binder() -> Result<Strong<dyn IVirtualMachineService>> {
 }
 
 /// Prepares a socket file descriptor for the vm payload service.
-///
-/// # Safety
-///
-/// The caller must ensure that this function is the only place that claims ownership
-/// of the file descriptor and it is called only once.
-unsafe fn prepare_vm_payload_service_socket() -> Result<OwnedFd> {
+fn prepare_vm_payload_service_socket() -> Result<OwnedFd> {
     let raw_fd = android_get_control_socket(VM_PAYLOAD_SERVICE_SOCKET_NAME)?;
     Ok(take_fd_ownership(raw_fd)?)
 }
