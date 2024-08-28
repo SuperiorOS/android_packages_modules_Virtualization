@@ -50,13 +50,14 @@ use rpcbinder::RpcSession;
 use rustutils::sockets::android_get_control_socket;
 use rustutils::system_properties;
 use rustutils::system_properties::PropertyWatcher;
+use safe_ownedfd::take_fd_ownership;
 use secretkeeper_comm::data_types::ID_SIZE;
 use std::borrow::Cow::{Borrowed, Owned};
 use std::env;
 use std::ffi::CString;
 use std::fs::{self, create_dir, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::unix::io::{FromRawFd, OwnedFd};
+use std::os::unix::io::OwnedFd;
 use std::os::unix::process::CommandExt;
 use std::os::unix::process::ExitStatusExt;
 use std::path::Path;
@@ -494,15 +495,7 @@ fn get_vms_rpc_binder() -> Result<Strong<dyn IVirtualMachineService>> {
 /// of the file descriptor and it is called only once.
 unsafe fn prepare_vm_payload_service_socket() -> Result<OwnedFd> {
     let raw_fd = android_get_control_socket(VM_PAYLOAD_SERVICE_SOCKET_NAME)?;
-
-    // Creating OwnedFd for stdio FDs is not safe.
-    if [libc::STDIN_FILENO, libc::STDOUT_FILENO, libc::STDERR_FILENO].contains(&raw_fd) {
-        bail!("File descriptor {raw_fd} is standard I/O descriptor");
-    }
-    // SAFETY: Initializing OwnedFd for a RawFd created by the init.
-    // We checked that the integer value corresponds to a valid FD and that the caller
-    // ensures that this is the only place to claim its ownership.
-    Ok(unsafe { OwnedFd::from_raw_fd(raw_fd) })
+    Ok(take_fd_ownership(raw_fd)?)
 }
 
 fn is_strict_boot() -> bool {
