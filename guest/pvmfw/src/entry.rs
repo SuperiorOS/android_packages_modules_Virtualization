@@ -276,9 +276,8 @@ fn main_wrapper(
     MEMORY.lock().as_mut().unwrap().unshare_all_memory();
 
     if let Some(mmio_guard) = get_mmio_guard() {
-        if cfg!(debuggable_vms_improvements) && debuggable_payload {
-            // Keep UART MMIO_GUARD-ed for debuggable payloads, to enable earlycon.
-        } else {
+        // Keep UART MMIO_GUARD-ed for debuggable payloads, to enable earlycon.
+        if !debuggable_payload {
             mmio_guard.unmap(UART_PAGE_ADDR).map_err(|e| {
                 error!("Failed to unshare the UART: {e}");
                 RebootReason::InternalError
