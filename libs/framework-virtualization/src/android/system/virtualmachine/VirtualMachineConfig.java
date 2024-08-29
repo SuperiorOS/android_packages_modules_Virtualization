@@ -777,7 +777,6 @@ public final class VirtualMachineConfig {
             VirtualMachineAppConfig.CustomConfig customConfig =
                     new VirtualMachineAppConfig.CustomConfig();
             customConfig.devices = EMPTY_STRING_ARRAY;
-            customConfig.extraKernelCmdlineParams = EMPTY_STRING_ARRAY;
             try {
                 customConfig.vendorImage =
                         ParcelFileDescriptor.open(mVendorDiskImage, MODE_READ_ONLY);
