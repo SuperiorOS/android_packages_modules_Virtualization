@@ -989,10 +989,6 @@ fn load_app_config(
 
         vm_config.devices.clone_from(&custom_config.devices);
         vm_config.networkSupported = custom_config.networkSupported;
-
-        for param in custom_config.extraKernelCmdlineParams.iter() {
-            append_kernel_param(param, &mut vm_config);
-        }
     }
 
     if config.memoryMib > 0 {
@@ -1545,17 +1541,6 @@ fn check_no_extra_apks(config: &VirtualMachineConfig) -> binder::Result<()> {
     Ok(())
 }
 
-fn check_no_extra_kernel_cmdline_params(config: &VirtualMachineConfig) -> binder::Result<()> {
-    let VirtualMachineConfig::AppConfig(config) = config else { return Ok(()) };
-    if let Some(custom_config) = &config.customConfig {
-        if !custom_config.extraKernelCmdlineParams.is_empty() {
-            return Err(anyhow!("debuggable_vms_improvements feature is disabled"))
-                .or_binder_exception(ExceptionCode::UNSUPPORTED_OPERATION);
-        }
-    }
-    Ok(())
-}
-
 fn check_protected_vm_is_supported() -> binder::Result<()> {
     let is_pvm_supported =
         hypervisor_props::is_protected_vm_supported().or_service_specific_exception(-1)?;
@@ -1576,9 +1561,6 @@ fn check_config_features(config: &VirtualMachineConfig) -> binder::Result<()> {
     }
     if !cfg!(multi_tenant) {
         check_no_extra_apks(config)?;
-    }
-    if !cfg!(debuggable_vms_improvements) {
-        check_no_extra_kernel_cmdline_params(config)?;
     }
     Ok(())
 }
