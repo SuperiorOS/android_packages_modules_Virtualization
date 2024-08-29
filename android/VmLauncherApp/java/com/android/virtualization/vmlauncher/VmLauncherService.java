@@ -76,8 +76,7 @@ public class VmLauncherService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mVirtualMachine != null
-                && mVirtualMachine.getStatus() == VirtualMachine.STATUS_RUNNING) {
+        if (isVmRunning()) {
             Log.d(TAG, "there is already the running VM instance");
             return START_NOT_STICKY;
         }
@@ -124,8 +123,7 @@ public class VmLauncherService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mVirtualMachine != null
-                && mVirtualMachine.getStatus() == VirtualMachine.STATUS_RUNNING) {
+        if (isVmRunning()) {
             try {
                 mVirtualMachine.stop();
                 stopForeground(STOP_FOREGROUND_REMOVE);
@@ -138,10 +136,19 @@ public class VmLauncherService extends Service {
         }
     }
 
+    private boolean isVmRunning() {
+        return mVirtualMachine != null
+                && mVirtualMachine.getStatus() == VirtualMachine.STATUS_RUNNING;
+    }
+
     // TODO(b/359523803): Use AVF API to get ip addr when it exists
     private void gatherIpAddrFromVm(Handler handler) {
         handler.postDelayed(
                 () -> {
+                    if (!isVmRunning()) {
+                        Log.d(TAG, "A virtual machine instance isn't running");
+                        return;
+                    }
                     int INTERNAL_VSOCK_SERVER_PORT = 1024;
                     try (ParcelFileDescriptor pfd =
                             mVirtualMachine.connectVsock(INTERNAL_VSOCK_SERVER_PORT)) {
