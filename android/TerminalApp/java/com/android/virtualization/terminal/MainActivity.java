@@ -26,6 +26,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.virtualization.vmlauncher.VmLauncherServices;
 
@@ -37,6 +38,7 @@ public class MainActivity extends Activity implements VmLauncherServices.VmLaunc
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Toast.makeText(this, R.string.vm_creation_message, Toast.LENGTH_SHORT).show();
         VmLauncherServices.startVmLauncherService(this, this);
 
         setContentView(R.layout.activity_headless);
@@ -70,11 +72,13 @@ public class MainActivity extends Activity implements VmLauncherServices.VmLaunc
     }
 
     public void onVmStop() {
+        Toast.makeText(this, R.string.vm_stop_message, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onVmStop()");
         finish();
     }
 
     public void onVmError() {
+        Toast.makeText(this, R.string.vm_error_message, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onVmError()");
         finish();
     }
