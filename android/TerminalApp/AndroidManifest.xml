@@ -9,8 +9,7 @@
         android:label="VmTerminalApp"
         android:usesCleartextTraffic="true">
         <activity android:name=".MainActivity"
-                  android:screenOrientation="landscape"
-                  android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode"
+                  android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|screenLayout|smallestScreenSize"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.virtualization.VM_TERMINAL" />
