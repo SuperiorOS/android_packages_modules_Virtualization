@@ -97,14 +97,15 @@ pub unsafe fn init_once() -> Result<(), std::io::Error> {
 pub fn take_fd_ownership(raw_fd: RawFd) -> Result<OwnedFd, Error> {
     let mut fds = INHERITED_FDS.get().ok_or(Error::NotInitialized)?.lock().unwrap();
 
-    match fds.get_mut(&raw_fd) {
-        None => Err(Error::FileDescriptorNotInherited(raw_fd)),
-        Some(None) => Err(Error::OwnershipTaken(raw_fd)),
-        Some(owned_fd) => {
-            let owned_fd = owned_fd.take().unwrap();
+    if let Some(value) = fds.get_mut(&raw_fd) {
+        if let Some(owned_fd) = value.take() {
             fcntl(raw_fd, F_SETFD(FdFlag::FD_CLOEXEC)).or(Err(Error::FailCloseOnExec(raw_fd)))?;
             Ok(owned_fd)
+        } else {
+            Err(Error::OwnershipTaken(raw_fd))
         }
+    } else {
+        Err(Error::FileDescriptorNotInherited(raw_fd))
     }
 }
 
