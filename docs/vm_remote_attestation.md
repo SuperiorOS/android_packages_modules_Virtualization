@@ -53,10 +53,12 @@ spec.
 
 Once the RKP VM is successfully attested, it acts as a trusted platform to
 attest pVMs. Leveraging its trusted status, the RKP VM validates the integrity
-of each pVM's DICE chain by comparing it against its own DICE chain. This
-validation process ensures that the pVMs are running in the expected VM
-environment and certifies the payload executed within each pVM. Currently, only
-Microdroid VMs are supported.
+of each [pVM DICE chain][pvm-dice-chain] by comparing it against its own DICE
+chain. This validation process ensures that the pVMs are running in the expected
+VM environment and certifies the payload executed within each pVM. Currently,
+only Microdroid VMs are supported.
+
+[pvm-dice-chain]: ./pvm_dice_chain.md
 
 ## API
 
