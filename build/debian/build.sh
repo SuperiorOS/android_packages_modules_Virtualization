@@ -34,6 +34,7 @@ parse_options() {
 }
 
 install_prerequisites() {
+	DEBIAN_FRONTEND=noninteractive \
 	apt install --no-install-recommends --assume-yes \
 		ca-certificates \
 		debsums \
@@ -63,15 +64,34 @@ download_debian_cloud_image() {
 	wget -O - ${url} | tar xz -C ${outdir} --strip-components=1
 }
 
+copy_android_config() {
+	local src=$(dirname $0)/fai_config
+	local dst=${config_space}
+
+	cp -R ${src}/* ${dst}
+}
+
 run_fai() {
-	local ver=bookworm
-	local cspace=${debian_cloud_image}/config_space/${ver}
+	local cspace=${config_space}
 	local out=${built_image}
+	local classes=(
+		BASE
+		DEBIAN
+		NOCLOUD
+		ARM64
+		LINUX_VERSION_BASE+LINUX_VARIANT_CLOUD
+		${debian_version^^} # uppercase
+		AVF
+		BUILD_IMAGE
+		SYSTEM_BOOT
+	)
+	# join by comma
+	classes=$(IFS=","; echo "${classes[*]}")
 
 	fai-diskimage \
 		--verbose \
 		--size 2G \
-		--class BASE,DEBIAN,NOCLOUD,ARM64,LINUX_VERSION_BASE+LINUX_VARIANT_CLOUD,BOOKWORM,BUILD_IMAGE,SYSTEM_BOOT \
+		--class ${classes} \
 		--cspace ${cspace} \
 		${out}
 }
@@ -86,9 +106,12 @@ trap clean_up EXIT
 built_image=image.raw
 workdir=$(mktemp -d)
 debian_cloud_image=${workdir}/debian_cloud_image
+debian_version=bookworm
+config_space=${debian_cloud_image}/config_space/${debian_version}
 
 check_sudo
 parse_options $@
 install_prerequisites
 download_debian_cloud_image
+copy_android_config
 run_fai
