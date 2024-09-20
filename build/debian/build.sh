@@ -48,7 +48,9 @@ install_prerequisites() {
 		python3-pytest \
 		python3-yaml \
 		qemu-utils \
-		udev
+		udev \
+		qemu-system-arm \
+		qemu-user-static
 }
 
 download_debian_cloud_image() {
